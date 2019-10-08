@@ -1,0 +1,88 @@
+1.1
+1. e m a c s SP e x e r 1 . h t m l Enter
+2. C-s H T M L Enter
+3. C-s s c a v e n g e r Enter M-b
+4. C-s s e l f - r e f e r e n t i a l Enter M-b M-b
+5. C-s a r r o w Enter M-b
+6. C-e
+7. C-a
+8. Yes, by using Emacs keystrokes such C-s/M-b/C-e/C-a to run Emacs commands we can do the above tasks in just a few keystrokes. We can use Emacs keybindings to search forward, move backward one word, move to the end of the line, move to the beginning of the line, and much more.
+9. No, I used Emacs keybindings to accomplish the given tasks in the fewest keystrokes I could think of.
+10. C-x C-c y
+
+1.2
+1. e m a c s SP e x e r 2 . h t m l Enter
+2. M-g g 1 9 Enter C-k
+3. C-s D E L E T E - M E SP D E L E T E - M E SP D E L E T E - M E Enter C-a C-k
+4. C-M-s < ! - - . * h t t p s : / / e n \ . w i k i p e d i a \ . o r g / w i k i / H T M L _ c o m m e n t # C o m m e n t s . * - - > Enter C-a C-k C-n C-k C-n C-k
+5. C-s < ! - - Enter M-b M-f M-z > C-s < ! - - Enter C-a C-k C-n C-k C-n C-k C-n C-k C-s < ! - - Enter C-a C-k
+
+1.3
+1. e m a c s SP e x e r 3 . h t m l Enter
+2. M-% A s s i g n m e n t  SP 1 Enter A s s i g n m e n t SP 4 2 Enter y y
+3. M-g g 1 Enter M-% U T F - 8 Enter U S - A S C I I Enter y
+4. M-g g 1 Enter C-x h M-x f l u s h - l i n e s Enter [ ^ [ : a s c i i : ] ] Enter
+5. M-g g 1 Enter C-s < / o l > Enter C-o
+6. Emacs commands used:
+   C-x C-c y
+   shell commands used:
+   d i f f SP - u SP e x e r 1 . h t m l SP e x e r 3 . h t m l SP > e x e r 3 . d i f f
+   c a t SP e x e r 3 . d i f f
+
+1.4
+1. c a t SP e x e r 2 . h t m l SP e x e r 2 . d i f f SP > e x e r 4 . h t m l
+2. e m a c s SP e x e r 4 . h t m l
+3. C-x ] C-r - < ! - - Enter C-f C-SP C-e M-w M-g g 4 3 7 Enter C-y
+4. C-x ] C-r C-r C-r C-f C-SP C-n C-n C-n C-e M-w M-g g 4 1 6 Enter C-y C-a C-d C-p C-d C-p C-d C-n C-n C-n C-n C-n Backspace Backspace Backspace
+   C-x ] C-r C-r C-r C-r Enter C-f C-SP C-n C-n C-e M-w M-g g 3 6 9 Enter C-y C-a C-d C-p C-d C-n C-n C-n Backspace Backspace
+   C-x ] C-r C-r C-r C-r C-r C-f C-SP C-e M-w M-g g 1 3 0 Enter C-y
+   C-x ] C-r C-r C-r C-r C-r C-r Enter C-f C-SP C-e M-w M-g g 1 9 Enter C-y
+   C-x ] C-r < ! - - C-r C-r Enter C-SP C-f C-f C-f C-f C-f C-f C-f M-w M-g g 4 1 5 Enter M-f M-f M-f M-f C-y
+5. C-s - - - SP e x e r 1 . h t m l Enter C-a C-SP M-> C-w Backspace 
+6. C-x u
+7. C-s - - - SP e x e r 1 . h t m l Enter C-a < ! - - M-% - - > Enter Enter ! C-x ] - - >
+   Note these keystrokes also remove closing HTML comment tags within the diff itself, so that exer4.html displays properly in the browser.
+8. M-% < o l > Enter < o L > Enter y y y y y y y 
+   I found 7 instances.
+9. As expected, exer4.html looks identical to exer1.html on a browser, even though it has the long HTML comment (containing exer2.diff) appended. The diff also confirms the files are the same except for changes from "<ol>" to "<oL>" and the HTML comment at the end.
+   shell commands used:
+   d i f f SP - u SP e x e r 1 . h t m l SP e x e r 4 . h t m l SP > e x e r 4 . d i f f
+   c a t SP e x e r 4 . d i f f
+
+1.5
+1. C-x d Enter + j u n k Enter
+2. C-x C-f j u n k / h e l l o . c Enter
+   Then I inserted the source code in to hello.c using Emacs.
+3. M-x c o m p i l e Enter h e l l o Enter
+4. Note DOWN stands for the down arrow key.
+   M-! . / h e l l o Enter C-x b DOWN DOWN DOWN Enter M-x r e n a m e - b u f f e r Enter h e l l o - o u t Enter
+5. Output (contains newline after the word "input"):
+   EOF on input
+
+   Emacs commands used:
+   C-SP M-> M-w C-x b k e y 1 . t x t Enter C-y
+   This uses the kill ring (shared by all buffers) so you can kill text in one buffer and yank it in another.
+
+1.6
+1. C-x b * s c r a t c h * Enter
+2. Result:
+   62861346235551121
+   Emacs commands used:
+   ( r a n d o m SP " 9 0 4 - 0 6 4 - 7 9 1 " ) C-j
+3. Result:
+   1181692489591439007
+   -329167640313173186
+   Emacs commands used:
+   ( s e t q SP x SP ( r a n d o m ) ) C-j ( s e t q SP y SP ( r a n d o m ) ) C-j
+4. Result:
+   -886767468302327934
+   Emacs commands used:
+   ( * SP x SP y ) C-j
+   The result is clearly not mathematically correct. If z is the product, z is only 2-3 times the value of y after being multiplied by the 19 digit positive integer x.
+5. Result:
+   -886767468302327934 (#o316614432762535717602, #x33b191af95779f82)
+   Emacs commands used:
+   M-: ( * SP x SP y ) Enter
+   The difference is that the result is shown in base 10, octal, and hex. However, it is still not mathematically correct.
+6. No, they're not truly random in the mathematical sense. They are pseudo-random, which means they're generated in a deterministic fashion but they have certain properties that mimic a random series. Pseudo-random numbers are generated from a seed value, and for any given seed the random function always generates the same sequence of numbers. Hence, they're not truly random but can still be useful for debugging certain programs. 
+7. Assuming (random) is truly random, we can assume the values it generates will be uniformly distributed across the range of values that the function can return. Typically this is the range [-2**61, 2**61 - 1] in Emacs on 64-bit platforms such as the SEASnet servers. The multiplication will fail when x * y > 2**61 - 1 or x * y < -2**61. Let A and B be the events {x * y > 2**61 - 1} and {x * y < -2**61}, respectively. Therefore, the probability that the two-variable product is mathematically incorrect is P(A U B), where "U" stands for the mathematical union operator.

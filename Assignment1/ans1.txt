@@ -1,0 +1,66 @@
+1.  man -k (inspected option -k in man page for man)
+2.  /usr/local/cs/bin/mv
+    /usr/bin/sh
+    commands used:
+    which mv
+    which sh
+    Note that which searches the path and returns the path of the mv and sh programs that would be run had these commands actually been invoked. Alternatively you can search for them with whereis, which will print out all paths to different versions of the program that it finds in standard Linux places.
+3.  /usr/bin/tr (tr - translate or delete characters)
+    /usr/bin/ar (ar - create, modify, and extract from archives)
+    /usr/bin/pr (pr - convert text files for printing)
+    commands used:
+    find /usr/bin -name ?r -perm /111
+4.  /usr/bin/emacs-24.3
+    commands used:
+    readlink /usr/bin/emacs
+    readlink /etc/alternatives/emacs
+    readlink /usr/bin/emacs-24.3
+    ls -l /usr/bin/emacs-24.3
+    I used readlink to find out that /usr/bin/emacs points to /etc/alternatives/emacs which points to /usr/bin/emacs-24.3. When readlink gave no output for /usr/bin/emacs-24.3, I used ls -l to verify that it was a file and not another symbolic link.
+5.  Version number of /usr/bin/gcc: 4.8.5
+    Version number of plain gcc: 9.2.0
+    commands used:
+    /usr/bin/gcc -v
+    gcc -v
+    They are different because there are multiple versions of gcc on the machine. Since /usr/local/cs/bin is prepended to my PATH, running plain gcc checks that directory first and finds /usr/local/cs/bin/gcc, which is version 9.2.0. /usr/bin/gcc is another version of gcc, 4.8.5, in a different directory.
+6.  chmod u+sx,o-w means first we are adding the execute mode to the user class and setting the setuid permission, then we are removing the write mode from the others class. Effectively we are enabling users to run the program with a level of access that matches the owner, and removing the ability to write to the file if you are not the owner of the file or a member of the file's group.
+7.  command used: "find /usr/local/cs -type d -mtime -28". (The -type -d option is used to look specifically for files of type directory, and the -mtime -28 option is used to find files whose data was last modified less than 28*24 hours ago (in the last 4 weeks))
+    Output (first 5):
+    /usr/local/cs
+    /usr/local/cs/src/bison
+    /usr/local/cs/src/bison/RCS
+    /usr/local/cs/src/gnuplot
+    /usr/local/cs/src/gnuplot/RCS
+    ...
+    total 175 (find /usr/local/cs -type d -mtime -28 | wc -l)
+8.  280
+    commands used:
+    find /usr/bin -type l | wc -l
+9.  python2.7/site-packages/numpy/f2py/tests/src/assumed_shape/.f2py_f2cmap
+    commands used:
+    find /usr/lib64 -type f -name ".*" | xargs ls -t | tail -n 1
+10. The locale command gets its data from the LC_* environment variables that control the locale. These can be set in the environment, be implied, or come from locale definition files.
+    commands used:
+    locale
+    man locale
+11. downcase-dwim
+    downcase-region
+    downcase-word
+    Emacs commands used:
+    C-h a downcase
+12. C-M-r runs the command isearch-backward-regexp, which does incremental search backward for a regular expression.
+    C-M-v runs the command scroll-other-window, which scrolls the next window upward (next window is the one below current one or the one at the top if current one is at the bottom).
+    Emacs commands used:
+    C-h k C-M-r
+    C-h k C-M-v
+13. C-g runs the command keyboard-quit, which is an interactive compiled Lisp function in 'simple.el'. It signals a 'quit' condition. During execution of Lisp code is causes a quit directly, while as a top-level editor command it beeps.
+    Emacs commands used:
+    C-h k C-g
+14. The yank function reinserts/pastes the last stretch of killed text. You can invoke it using the keystrokes C-y.
+    Emacs commands used:
+    C-h f yank
+15. The information is the same but ls -l prints the information to stdout, whereas dired creates an Emacs buffer containing the list of directory contents. Also, ls -l leaves you at the bottom of the sorted list whereas dired leaves you at the top.
+    Emacs commands used:
+    C-x d Backspace Backspace / u s r / b i n Enter
+    shell commands used:
+    ls -l /usr/bin
