@@ -1,0 +1,107 @@
+#!/bin/sh
+
+# The directory we are searching
+D=""
+
+# Do field splitting on newlines to support spaces in file names
+IFS=$'\n'
+
+# Check for valid arguments
+if [ $# -eq 0 ]
+then
+    D="."
+elif [ $# -eq 1 ]
+then
+    if [ -L "$1" ]
+    then
+	echo "The argument D cannot be a symbolic link." 1>&2
+	exit 1
+    fi
+    if [ ! -d "$1" ]
+    then
+	echo "The argument D must be the name of a directory." 1>&2
+	exit 2
+    fi
+    # If $1 starts with '-'
+    if [ $1 != ${1#-} ]    
+    then
+	echo "The argument D cannot start with the character '-'." 1>&2
+	exit 3
+    fi
+    D="$1"
+elif [ $# -gt 1 ]
+then
+    echo "This script supports 0 or 1 operand only. Do not supply more than 1." 1>&2
+    exit 4
+fi
+
+# Check for read permissions on directory
+if [ ! -r "$D" ]
+then
+    echo "The input directory $D cannot be read, please add the read permission." 1>&2
+    exit
+fi
+
+# If D has a trailing '/', remove it for Rule checking
+D=${D%/}
+
+# Exclude the input directory D (first line of find output)
+filenames=`find "$D" -maxdepth 1 -exec basename {} \; | tail -n +2`
+
+violations=""
+for filename in $filenames
+do
+    # Rule 1
+    if [ ! -z "`echo "$filename" | grep -E '[^A-Za-z._-]'`" ]
+    then
+	violations="$violations$filename\n"
+    fi
+    # Rule 2
+    if [ ! -z "`echo "$filename" | grep -E '^-'`" ]
+    then
+        violations="$violations$filename\n"
+    fi
+    # Rule 3
+    if [ ! -z "`echo "$filename" | grep -E -v '(^\.$|^\.\.$)' | grep -E '^\.'`" ]
+    then
+        violations="$violations$filename\n"
+    fi
+    # Rule 4
+    if [ ! -z "`echo "$filename" | awk '14 < length'`" ]
+    then
+        violations="$violations$filename\n"
+    fi
+    # Check for read permissions on directories
+    if [ ! -L "$D/$filename" ] && [ -d "$D/$filename" ] && [ ! -r "$D/$filename" ]
+    then
+	echo "The directory $D/$filename cannot be read, please add the read permission." 1>&2
+    fi
+done
+
+# TODO: Confirm if should be checking the input directory D itself
+# Check Rules 1-4 on the input directory D itself
+if [ ! -z "`echo "$D" | grep -E '[^A-Za-z._-]'`" ] || [ ! -z "`echo "$D" | grep -E '^-'`" ] || [ ! -z "`echo "$D" | grep -E -v '(^\.$|^\.\.$)' | grep -E '^\.'`" ] || [ ! -z "`echo "$D" | awk '14 < length'`" ]
+then
+    echo "$D/"
+fi
+
+# Add a trailing '/' for displaying output
+D="$D/"
+
+# Find case insensitive duplicates
+# Exclude the input directory D (first line of find output)
+duplicates=`find "$D" -maxdepth 1 -exec basename {} \; | tail -n +2 | uniq -iD`
+
+# Deduplicate any lines that violated a Rule 1-4 and was a duplicate
+violations=`echo -e "$violations$duplicates" | sort -u`
+
+# Output full file names with trailing '/' for directories
+for violation in $violations
+do
+  suffix=""
+  if [ ! -L "$D$violation" ] && [ -d "$D$violation" ]
+  then
+      suffix="/"
+  fi
+  echo "$D$violation$suffix"
+done

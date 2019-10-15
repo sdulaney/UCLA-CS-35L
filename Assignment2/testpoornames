@@ -1,0 +1,28 @@
+#!/bin/sh
+
+IFS=$'\n'
+
+actual_output=`./poornames testdir`
+expected_output='testdir/-file
+testdir/..profile
+testdir/.abababababababa
+testdir/.profile
+testdir/St._Andrews
+testdir/St._Andrews2
+testdir/abababababababa
+testdir/f ile
+testdir/f*ile
+testdir/file0
+testdir/hAlloween/
+testdir/hallOween
+testdir/halloween/
+testdir/libstdc++.so.6
+testdir/st._anDrEWS
+testdir/st._anDrEWS2'
+
+if [ "$actual_output" = "$expected_output" ]
+then
+    echo "Test: PASS"
+else
+    echo "Test: FAIL"
+fi

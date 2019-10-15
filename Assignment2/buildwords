@@ -1,0 +1,1 @@
+cat /dev/stdin | sed -r 's/\?|<u>|<\/u>//g' | tr [:upper:] [:lower:] | tr '`' '\47' | awk '/^ *<td[^>]*>(p|k|\47|m|n|w|l|h|a|e|i|o|u| )+<\57td> *$/ {gsub(/^ *<td[^>]*>/, ""); gsub(/<\57td> *$/, ""); for(i = 1; i <= NF; i++) {print $i;}}' | sort -u
