@@ -2,6 +2,7 @@
 
 IFS=$'\n'
 
+# Test basic poornames
 actual_output=`./poornames testdir`
 expected_output='testdir/-file
 testdir/..profile
@@ -22,7 +23,24 @@ testdir/st._anDrEWS2'
 
 if [ "$actual_output" = "$expected_output" ]
 then
-    echo "Test: PASS"
+    echo "basic poornames: PASS"
 else
-    echo "Test: FAIL"
+    echo "basic poornames: FAIL"
+fi
+
+# Test recursive poornames
+ractual_output=`./poornames -r d`
+# TODO: make sure order correct
+rexpected_output='d/a/B/
+d/a/C
+d/a/b/
+d/a/c/
+d/A/
+d/a/'
+
+if [ "$ractual_output" = "$rexpected_output" ]
+then
+    echo "recursive poornames: PASS"
+else
+    echo "recursive poornames: FAIL"
 fi
