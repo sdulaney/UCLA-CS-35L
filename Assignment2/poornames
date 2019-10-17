@@ -13,7 +13,7 @@ check_filenames () {
     # Check for read permissions on directory
     if [ ! -r "$dir" ]
     then
-	echo "The input directory $dir cannot be read, please add the read permission." 1>&2
+	echo "The input directory $dir cannot be read." 1>&2
 	exit
     fi
 
@@ -47,30 +47,26 @@ check_filenames () {
             violations="$violations$filename\n"
 	fi
 	# Check for read permissions on directories
-	if [ ! -L "$dir/$filename" ] && [ -d "$dir/$filename" ] && [ ! -r "$dir/$filename" ]
+	if [ ! -L "$dir/$filename" ] && [ -d "$dir/$filename" ] && \
+	       [ ! -r "$dir/$filename" ]
 	then
-	    echo "The directory $dir/$filename cannot be read, please add the read permission." 1>&2
+	    echo "The directory $dir/$filename cannot be read." 1>&2
 	fi
 	# Recurse if directory is readable and '-r' option is used
-	if [ ! -L "$dir/$filename" ] && [ -d "$dir/$filename" ] && [ -r "$dir/$filename" ] && [ "$recurse" = "-r" ]
+	if [ ! -L "$dir/$filename" ] && [ -d "$dir/$filename" ] && \
+	       [ -r "$dir/$filename" ] && [ "$recurse" = "-r" ]
         then
             check_filenames "$dir/$filename" -r
         fi
     done
-
-    # TODO: Confirm if should be checking the input directory dir itself
-    # Check Rules 1-4 on the input directory dir itself
-    #if [ ! -z "`echo "$dir" | grep -E '[^A-Za-z._-]'`" ] || [ ! -z "`echo "$dir" | grep -E '^-'`" ] || [ ! -z "`echo "$dir" | grep -E -v '(^\.$|^\.\.$)' | grep -E '^\.'`" ] || [ ! -z "`echo "$dir" | awk '14 < length'`" ]
-    #then
-    #    echo "$dir/"
-    #fi
 
     # Add a trailing '/' for displaying output
     dir="$dir/"
 
     # Find case insensitive duplicates
     # Exclude the input directory dir (first line of find output)
-    duplicates=`find "$dir" -maxdepth 1 -exec basename {} \; | tail -n +2 | uniq -iD`
+    duplicates=`find "$dir" -maxdepth 1 -exec basename {} \; | tail -n +2`
+    duplicates=`echo -e "$duplicates" | uniq -iD`
 
     # Deduplicate any lines that violated a Rule 1-4 and was a duplicate
     violations=`echo -e "$violations$duplicates" | sort -u`
