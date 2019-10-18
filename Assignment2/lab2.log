@@ -1,0 +1,86 @@
+1) tr -c 'A-Za-z' '[\n*]'
+This command outputs the text in assign2.html, with any character that is not in
+SET1 (range A-Z or range a-z) "translated" or replaced with the corresponding
+character in SET2 (consists of copies of \n until length of SET1). The tr option
+-c uses the complement of SET1.
+
+2) tr -cs 'A-Za-z' '[\n*]'
+This command outputs the same thing as the previous one except it adds the tr
+option -s, which replaces all sequences of a repeated character from SET2 (just
+\n in this case) into a single occurrence. So it "squeezes" consecutive newlines
+into a single new line, and it does this after translation.
+
+3) tr -cs 'A-Za-z' '[\n*]' | sort
+This command outputs the same thing as the previous one except it pipes the
+output to sort. The lines are sorted and outputted in ASCII order because I'm in
+the standard C locale.
+
+4) tr -cs 'A-Za-z' '[\n*]' | sort -u
+This command outputs the same thing as the previous one except it adds the sort
+option -u, which only outputs unique lines (duplicates are removed).
+
+5) tr -cs 'A-Za-z' '[\n*]' | sort -u | comm - words
+This command compares the (sorted) output from the previous command with the
+(sorted) file words by piping the output to comm. The 1st column of output
+contains lines unique to the previous output, the 2nd column contains lines
+unique to the file words, and the 3rd column contains lines common to both.
+
+6) tr -cs 'A-Za-z' '[\n*]' | sort -u | comm -23 - words # ENGLISHCHECKER
+This command outputs the same thing as the previous one except it adds the comm
+option -23, which suppresses the 2nd and 3rd columns, so only the 1st column is
+shown. It outputs words from assign2.html that are not in the file words.
+
+Give a step-by-step explanation of how you created the Hawaiian dictionary:
+- I used cat to output STDIN.
+- I used sed to remove all instances of '?', '<u>' and '</u>'.
+- I used tr to translate all uppercase letters to lowercase letters.
+- I used tr to translate all grave accents (`) in to apostrophes ('). I used the
+octal value \47 in order to use the apostrophe within single quotes.
+- I used awk to match lines of the form 'A<tdX>W</td>Z' (with the given
+constraints) using a regular expression.
+- I used the awk function gsub to delete all text except for the part W in
+'A<tdX>W</td>Z'.
+- I used an awk for statement to loop over all fields in each record and print
+them. I used the default field separator for GNU awk because it is able to split
+the record based on spaces as required.
+- I used sort to sort the words and the option -u to remove duplicates. 
+
+buildwords script:
+#!/bin/sh
+
+cat /dev/stdin | sed -r 's/\?|<u>|<\/u>//g' | tr [:upper:] [:lower:] | \
+    tr '`' '\47' | \
+    awk '/^ *<td[^>]*>(p|k|\47|m|n|w|l|h|a|e|i|o|u| )+<\57td> *$/ {print;}' | \
+    awk '{gsub(/^ *<td[^>]*>/, ""); gsub(/<\57td> *$/, ""); print;}' | \
+    awk '{for(i = 1; i <= NF; i++) {print $i;}}' | sort -u
+
+Shell command Hawaiian checker:
+tr -cs 'A-Za-z\47' '[\n*]' | tr [:upper:] [:lower:] | sort -u | \
+comm -23 - hwords
+
+NOTE: For the following, ENGLISHCHECKER was copied word for word from the spec.
+Hence, the output of ENGLISHCHECKER is not lowercased and does not include
+apostrophes (').
+
+Distinct misspelled words using ENGLISHCHECKER: 93 words
+cat assign2.html | tr -cs 'A-Za-z' '[\n*]' | sort -u | comm -23 - words | wc -w
+NOTE: Using the wc option -w avoids counting the blank line at the beginning as
+a word.
+
+Distinct misspelled words using HAWAIIANCHECKER: 557 words
+cat assign2.html | tr -cs 'A-Za-z\47' '[\n*]' | tr [:upper:] [:lower:] | \
+sort -u | comm -23 - hwords | wc -w
+
+Number of distinct words that ENGLISHCHECKER reports as misspelled but
+HAWAIIANCHECKER does not: 63 words
+Examples: ALL, All.
+cat assign2.html | tr -cs 'A-Za-z' '[\n*]' | sort -u | comm -23 - words > \
+ENGLISHCHECKER.txt
+cat assign2.html | tr -cs 'A-Za-z\47' '[\n*]' | tr [:upper:] [:lower:] | \
+sort -u | comm -23 - hwords > HAWAIIANCHECKER.txt
+comm -23 ENGLISHCHECKER.txt HAWAIIANCHECKER.txt | wc -w
+
+Number of distinct words that HAWAIIANCHECKER reports as misspelled but
+ENGLISHCHECKER does not: 527 words
+Examples: ', 'a.
+comm -13 ENGLISHCHECKER.txt HAWAIIANCHECKER.txt | wc -w
