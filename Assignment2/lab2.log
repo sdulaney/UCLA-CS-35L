@@ -31,6 +31,20 @@ option -23, which suppresses the 2nd and 3rd columns, so only the 1st column is
 shown. It outputs words from assign2.html that are not in the file words.
 
 Give a step-by-step explanation of how you created the Hawaiian dictionary:
+NOTE: Trivial commands are not explained.
+
+Commands used for Lab:
+export LC_ALL='C'
+locale
+cat /usr/share/dict/words | sort > words
+wget https://web.cs.ucla.edu/classes/fall19/cs35L/assign/assign2.html
+(Run cat assign2.html | commands 1-6 above)
+wget https://www.mauimapp.com/moolelo/hwnwdshw.htm
+emacs buildwords
+chmod +x buildwords
+cat hwnwdshw.htm | ./buildwords > hwords
+
+Comments for buildwords script:
 - I used cat to output STDIN.
 - I used sed to remove all instances of '?', '<u>' and '</u>'.
 - I used tr to translate all uppercase letters to lowercase letters.
@@ -74,6 +88,9 @@ sort -u | comm -23 - hwords | wc -w
 Number of distinct words that ENGLISHCHECKER reports as misspelled but
 HAWAIIANCHECKER does not: 63 words
 Examples: ALL, All.
+NOTE: I saved the distinct words reported as misspelled into different text
+files for the two commands ENGLISHCHECKER and HAWAIIANCHECKER. Then I counted
+the words unique to ENGLISHCHECKER.txt.
 cat assign2.html | tr -cs 'A-Za-z' '[\n*]' | sort -u | comm -23 - words > \
 ENGLISHCHECKER.txt
 cat assign2.html | tr -cs 'A-Za-z\47' '[\n*]' | tr [:upper:] [:lower:] | \
@@ -83,4 +100,5 @@ comm -23 ENGLISHCHECKER.txt HAWAIIANCHECKER.txt | wc -w
 Number of distinct words that HAWAIIANCHECKER reports as misspelled but
 ENGLISHCHECKER does not: 527 words
 Examples: ', 'a.
+NOTE: I counted the words unique to HAWAIIANCHECKER.txt.
 comm -13 ENGLISHCHECKER.txt HAWAIIANCHECKER.txt | wc -w
