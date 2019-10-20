@@ -1,0 +1,259 @@
+Commands used for Lab:
+NOTE: Trivial commands are not explained.
+
+man ls
+
+man exec
+
+emacs la
+
+chmod +x la
+
+touch .foo
+
+touch bar
+
+./la -A
+# This did not reproduce the problem.
+
+which ls
+# This revealed the default version of ls to be /usr/local/cs/bin/ls, so I updated the shell script la to use /usr/bin/ls.
+
+./la -A
+# This reproduced the problem now.
+
+/usr/bin/ls --version
+# This shows the Coreutils version "ls (GNU coreutils) 8.22".
+
+1.
+# Download the Coreutils 8.29 source code compressed tarball, signature, and GNU keyring.
+wget ftp://ftp.gnu.org/gnu/coreutils/coreutils-8.29.tar.xz
+wget ftp://ftp.gnu.org/gnu/coreutils/coreutils-8.29.tar.xz.sig
+wget https://ftp.gnu.org/gnu/gnu-keyring.gpg
+
+# Verify its signature with the GNU keyring.
+gpg --verify --keyring ./gnu-keyring.gpg coreutils-8.29.tar.xz.sig
+
+# Output of previous command:
+gpg: directory `/u/cs/ugrad/stewart/.gnupg' created
+gpg: new configuration file `/u/cs/ugrad/stewart/.gnupg/gpg.conf' created
+gpg: WARNING: options in `/u/cs/ugrad/stewart/.gnupg/gpg.conf' are not yet active during this run
+gpg: keyring `/u/cs/ugrad/stewart/.gnupg/pubring.gpg' created
+gpg: Signature made Wed Dec 27 10:29:05 2017 PST using RSA key ID 306037D9
+gpg: /u/cs/ugrad/stewart/.gnupg/trustdb.gpg: trustdb created
+gpg: Good signature from "P�draig Brady <P@draigBrady.com>"
+gpg:                 aka "P�draig Brady <pbrady@redhat.com>"
+gpg:                 aka "P�draig Brady <pixelbeat@gnu.org>"
+gpg: WARNING: This key is not certified with a trusted signature!
+gpg:          There is no indication that the signature belongs to the owner.
+Primary key fingerprint: 6C37 DC12 121A 5006 BC1D  B804 DF6F D971 3060 37D9
+
+# First, there is a warning and messages related to this being the first time I've run gpg. Next gpg responds that the signature is good, meaning that the signature was indeed created with the private key corresponding to gnu-keyring.gpg and the file has not been modified since then. But there is another warning "the key is not certified with a trusted signature and there is no indication that the signature belongs to the owner". This is because the key has not been marked as trusted by myself or someone within my web of trust (Source: GPG Manual).
+
+2.
+# Extract the file.
+tar -xJvf coreutils-8.29.tar.xz
+
+# Run configure script that checks system-dependent variables and creates Makefiles.
+# Use configure option --prefix to specify an installation prefix other than '/usr/local'.
+cd coreutils-8.29/
+emacs INSTALL
+mkdir /u/cs/ugrad/stewart/Assignment3/temp
+./configure --prefix=/u/cs/ugrad/stewart/Assignment3/temp
+
+# Compile.
+make
+
+# Install the package into a temporary directory /u/cs/ugrad/stewart/Assignment3/temp/bin.
+make install
+
+3.
+# Reproduce the bug with the unmodified version of coreutils.
+# Use a modified version of the shell script test that comes with the patch.
+emacs test-a-option.sh
+chmod +x test-a-option.sh
+./test-a-option.sh
+echo $?
+# Note this outputs 1, because the test fails. The command incorrectly outputs "." and ".." as expected.
+
+shell script test-a-option.sh:
+
+#!/bin/sh
+# exercise the -a option
+
+mkdir d
+/u/cs/ugrad/stewart/Assignment3/temp/bin/ls -aA d >out
+[ ! -s out ] || fail=1
+exit $fail
+
+4.
+# Create a file and copy/paste the contents of the patch into it.
+cd coreutils-8.29/
+emacs patch.diff
+
+# Apply the patch. Note the use of patch option -p1 strips the smallest prefix containing 1 leading slash from each file name in the patch file. For example, instead of the entire file name a/src/ls.c being used, src/ls.c is used instead.
+patch -p1 < patch.diff
+
+Output of previous command:
+patching file NEWS
+Hunk #1 FAILED at 4.
+1 out of 1 hunk FAILED -- saving rejects to file NEWS.rej
+patching file src/ls.c
+Hunk #1 succeeded at 1900 (offset -3 lines).
+patching file tests/local.mk
+patching file tests/ls/a-option.sh
+
+# Note there is a problem patching the file NEWS, but the fact that patching NEWS fails will not prevent the modified coreutils from working. This is because the patch of src/ls.c succeeds.
+
+contents of patch.diff:
+
+From 8969027d310e036f1c11f3d8f6da2e4a55ecb460 Mon Sep 17 00:00:00 2001
+From: Paul Eggert <eggert@cs.ucla.edu>
+Date: Tue, 27 Mar 2018 14:55:22 -0700
+Subject: [PATCH] ls: -A now overrides -a
+
+Problem reported by Karl Berry (Bug#30963).
+* NEWS: Mention this.
+* src/ls.c (decode_switches): Implement this.
+* tests/ls/a-option.sh: New file.
+* tests/local.mk (all_tests): Add it.
+---
+ NEWS                 |  3 +++
+ src/ls.c             |  3 +--
+ tests/local.mk       |  1 +
+ tests/ls/a-option.sh | 27 +++++++++++++++++++++++++++
+ 4 files changed, 32 insertions(+), 2 deletions(-)
+ create mode 100755 tests/ls/a-option.sh
+
+diff --git a/NEWS b/NEWS
+index 351a0827b..207e785b3 100644
+--- a/NEWS
++++ b/NEWS
+@@ -4,6 +4,9 @@ GNU coreutils NEWS                                    -*- outline -*-
+ 
+ ** Bug fixes
+ 
++  'ls -aA' is now equivalent to 'ls -A', since -A now overrides -a.
++  [bug introduced in coreutils-5.3.0]
++
+   'mv -n A B' no longer suffers from a race condition that can
+   overwrite a simultaneously-created B.  This bug fix requires
+   platform support for the renameat2 or renameatx_np syscalls, found
+diff --git a/src/ls.c b/src/ls.c
+index c89a22f68..bae2c1104 100644
+--- a/src/ls.c
++++ b/src/ls.c
+@@ -1903,8 +1903,7 @@ decode_switches (int argc, char **argv)
+           break;
+ 
+         case 'A':
+-          if (ignore_mode == IGNORE_DEFAULT)
+-            ignore_mode = IGNORE_DOT_AND_DOTDOT;
++          ignore_mode = IGNORE_DOT_AND_DOTDOT;
+           break;
+ 
+         case 'B':
+diff --git a/tests/local.mk b/tests/local.mk
+index c798cc83a..e60ea1d1e 100644
+--- a/tests/local.mk
++++ b/tests/local.mk
+@@ -575,6 +575,7 @@ all_tests =					\
+   tests/ln/sf-1.sh							\
+   tests/ln/slash-decorated-nonexistent-dest.sh				\
+   tests/ln/target-1.sh										\
++  tests/ls/a-option.sh													\
+   tests/ls/abmon-align.sh												  \
+   tests/ls/block-size.sh												    \
+   tests/ls/color-clear-to-eol.sh											     \
+diff --git a/tests/ls/a-option.sh b/tests/ls/a-option.sh
+new file mode 100755
+index 000000000..4fe1e9394
+--- /dev/null
++++ b/tests/ls/a-option.sh
+@@ -0,0 +1,27 @@
++#!/bin/sh
++# exercise the -a option
++
++# Copyright 2018 Free Software Foundation, Inc.
++
++# This program is free software: you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation, either version 3 of the License, or
++# (at your option) any later version.
++
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++
++# You should have received a copy of the GNU General Public License
++# along with this program.  If not, see <https://www.gnu.org/licenses/>.
++
++. "${srcdir=.}/tests/init.sh"; path_prepend_ ./src
++print_ver_ ls
++
++mkdir d || framework_failure_
++
++ls -aA d >out || framework_failure
++compare /dev/null out || fail=1
++
++Exit $fail
+-- 
+2.14.3
+
+5.
+# Build/compile the fixed version from the top level of the source tree.
+cd coreutils-8.29/
+make
+# Note that we only we only build the fixed version, but do not install it in the temporary directory /u/cs/ugrad/stewart/Assignment3/temp.
+
+Output of previous command:
+ cd . && /bin/sh /u/cs/ugrad/stewart/Assignment3/coreutils-8.29/build-aux/missing automake-1.15 --gnu Makefile
+/u/cs/ugrad/stewart/Assignment3/coreutils-8.29/build-aux/missing: line 81: automake-1.15: command not found
+WARNING: 'automake-1.15' is missing on your system.
+         You should only need it if you modified 'Makefile.am' or
+         'configure.ac' or m4 files included by 'configure.ac'.
+         The 'automake' program is part of the GNU Automake package:
+         <http://www.gnu.org/software/automake>
+         It also requires GNU Autoconf, GNU m4 and Perl in order to run:
+         <http://www.gnu.org/software/autoconf>
+         <http://www.gnu.org/software/m4/>
+         <http://www.perl.org/>
+make: *** [Makefile:5997: Makefile.in] Error 127
+
+# Note the message about a problem with automake-1.15 not being installed on this system.
+
+# We can fix this by using autoreconf to update the generated configuration files. This updates the Makefile to use automake-1.16.
+autoreconf
+
+make
+# This runs successfully now and produces a lot of output about its activity and the commands that it runs.
+
+# Commands that needed to be executed:
+# Any commands that result in preprocessing, compiling, assembling, or linking the file src/ls.c.
+# For example: CC src/ls.o, CCLD src/ls, etc. (CC = gcc, CCLD = $(CC))
+
+# Commands that weren't needed:
+# All others, because the only file that was changed that also affects the behavior of the ls command is src/ls.c (the other two files changed were test files).
+# For example, there was no need to regenerate executables for commands other than ls or to generate man pages for any commands.
+
+6.
+# Test that the modified ls works using an updated version of the shell script used previously.
+# Note that because we didn't install the modified version, we can test it using the copy in the coreutils-8.29/src directory.
+
+cp test-a-option.sh test-a-option-modified.sh
+emacs test-a-option-modified.sh
+# Note the file is already executable because we copied the previous version.
+./test-a-option-modified.sh
+echo $?
+# Note this outputs 0 because the test passed. The command outputs nothing as expected because the patch fixed the bug.
+
+shell script test-a-option-modified.sh:
+
+#!/bin/sh
+# exercise the -a option
+
+mkdir d
+/u/cs/ugrad/stewart/Assignment3/coreutils-8.29/src/ls -aA d >out
+[ ! -s out ] || fail=1
+exit $fail

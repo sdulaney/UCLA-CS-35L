@@ -1,0 +1,5 @@
+Q1. In terms of time performance, the patch should improve the performance of ls slightly because it removes an if statement. In terms of correctness performance, the patch also improves performance because ls now meets the POSIX.1-2008 requirement that -a and -A should override each other.
+
+Q2. If my company adopts this patched version of Coreutils instead of the default one, we should watch out for code that depends on the behavior of ls -aA without the patch. This could easily introduce other problems with an application. For example, if you had a fragile shell script for parsing multiple log files that had been written with ls -Aa d | tail -n +3 to ignore the "." and ".." expected in the unpatched version of ls, with the patched version this code would be suppressing two directory entries that you expected it to output.
+
+Q3. 
