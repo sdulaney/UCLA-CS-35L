@@ -3,3 +3,43 @@ Q1. In terms of time performance, the patch should improve the performance of ls
 Q2. If my company adopts this patched version of Coreutils instead of the default one, we should watch out for code that depends on the behavior of ls -aA without the patch. This could easily introduce other problems with an application. For example, if you had a fragile shell script for parsing multiple log files that had been written with ls -Aa d | tail -n +3 to ignore the "." and ".." expected in the unpatched version of ls, with the patched version this code would be suppressing two directory entries that you expected it to output.
 
 Q3. 
+wget https://web.cs.ucla.edu/classes/fall19/cs35L/assign/randline.py
+python randline.py /dev/null
+
+Output of previous command:
+Traceback (most recent call last):
+  File "randline.py", line 70, in <module>
+    main()
+  File "randline.py", line 64, in main
+    sys.stdout.write(generator.chooseline())
+  File "randline.py", line 34, in chooseline
+    return random.choice(self.lines)
+  File "/usr/local/cs/Python-2.7.16/lib/python2.7/random.py", line 277, in choice
+    return seq[int(self.random() * len(seq))]  # raises IndexError if seq is empty
+IndexError: list index out of range
+
+When this script is invoked on an empty file like /dev/null (essentially an empty file), it crashes and outputs a stack trace and an error "IndexError: list index out of range". This is because the function "main()" calls "generator.chooseline()" which calls "random.choice(self.lines)", and the function choice in the Python random module expects a non-empty sequence. When passed self.lines, which is an empty sequence in this case, the function choice raises IndexError because it tries to access an index of an empty sequence as can be seen in the code below.
+
+From file /usr/local/cs/Python-2.7.16/lib/python2.7/random.py:
+
+def choice(self, seq):
+        """Choose a random element from a non-empty sequence."""
+        return seq[int(self.random() * len(seq))]  # raises IndexError if seq is empty
+
+Q4.
+python3 randline.py randline-test.txt
+# randline-test.txt contains the letters a-k on separate lines
+
+Output of previous command:
+  File "randline.py", line 65
+    except IOError as (errno, strerror):
+                      ^
+SyntaxError: invalid syntax
+
+When this script is invoked with Python 3 rather than Python 2, it crashes and outputs an error "SyntaxError: invalid syntax". This is because it is using syntax that is valid in Python 2 but that is no longer valid in Python 3. Specifically, exceptions can't be unpacked in Python 3. In Python 2, exceptions were iterable, so it was possible to unpack the arguments of an exception as part of the except statement. In Python 3, the arguments must be accessed through the args attribute.
+
+The correct syntax for Python 3 would be:
+except IOError as err:
+       errno, strerror = err.args
+
+Q5.
