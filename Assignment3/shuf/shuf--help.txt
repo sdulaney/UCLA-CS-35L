@@ -1,22 +1,21 @@
-Usage: shuf [OPTION]... [FILE]
-  or:  shuf -e [OPTION]... [ARG]...
-  or:  shuf -i LO-HI [OPTION]...
-Write a random permutation of the input lines to standard output.
+Usage: 
+shuf.py [OPTION]... [FILE]
+shuf.py -i LO-HI [OPTION]...
 
-With no FILE, or when FILE is -, read standard input.
+Generate random permutations/shuffle lines of text.
 
-Mandatory arguments to long options are mandatory for short options too.
-  -e, --echo                treat each ARG as an input line
-  -i, --input-range=LO-HI   treat each number LO through HI as an input line
-  -n, --head-count=COUNT    output at most COUNT lines
-  -o, --output=FILE         write result to FILE instead of standard output
-      --random-source=FILE  get random bytes from FILE
-  -r, --repeat              output lines can be repeated
-  -z, --zero-terminated     line delimiter is NUL, not newline
-      --help     display this help and exit
-      --version  output version information and exit
-
-GNU coreutils online help: <https://www.gnu.org/software/coreutils/>
-Report any translation bugs to <https://translationproject.org/team/>
-Full documentation <https://www.gnu.org/software/coreutils/shuf>
-or available locally via: info '(coreutils) shuf invocation'
+Options:
+  --version             show program's version number and exit
+  -h, --help            show this help message and exit
+  -i INPUT_RANGE, --input-range=INPUT_RANGE
+                        Act as if input came from a file containing the range
+                        of unsigned decimal integers LO...HI, one per line.
+  -n HEAD_COUNT, --head-count=HEAD_COUNT
+                        Output at most COUNT lines. By default, all input
+                        lines are output.
+  -r, --repeat          Repeat output values, that is, select with
+                        replacement. With this option the output is not a
+                        permutation of the input; instead, each output line is
+                        randomly chosen from all the inputs. This option is
+                        typically combined with --head-count; if --head-count
+                        is not given, shuf.py repeats indefinitely.

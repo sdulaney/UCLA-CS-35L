@@ -1,100 +1,21 @@
-96
-88
-85
-84
-74
-79
-59
-4
-6
-13
-67
-40
-80
-99
-39
-16
-34
-8
-14
-35
-65
-46
-72
-19
-41
-91
-5
-98
-94
-93
-52
-18
-1
-87
-28
-61
-43
-31
-54
-51
-77
-76
-92
-21
-11
-12
-64
-95
-75
-33
-56
-78
-23
-48
-57
-83
-50
-60
-44
-7
-47
-69
-82
-45
-3
-49
-17
-30
-53
-9
-32
-29
-27
-2
-55
-70
-86
-68
-62
-36
-97
-71
-63
-20
-66
-89
-25
-100
-26
-10
-38
-58
-15
-90
-81
-73
-37
-24
-22
-42
+Usage: 
+shuf.py [OPTION]... [FILE]
+shuf.py -i LO-HI [OPTION]...
+
+Generate random permutations/shuffle lines of text.
+
+Options:
+  --version             show program's version number and exit
+  -h, --help            show this help message and exit
+  -i INPUT_RANGE, --input-range=INPUT_RANGE
+                        Act as if input came from a file containing the range
+                        of unsigned decimal integers LO...HI, one per line.
+  -n HEAD_COUNT, --head-count=HEAD_COUNT
+                        Output at most COUNT lines. By default, all input
+                        lines are output.
+  -r, --repeat          Repeat output values, that is, select with
+                        replacement. With this option the output is not a
+                        permutation of the input; instead, each output line is
+                        randomly chosen from all the inputs. This option is
+                        typically combined with --head-count; if --head-count
+                        is not given, shuf.py repeats indefinitely.
