@@ -102,6 +102,14 @@ imal integers LO...HI, one per line.\n")
                     parser.error("I/O error({0}): {1}".
                          format(errno, strerror))
             else:
+                if options.head_count is not None:
+                    try:
+                        numlines = int(options.head_count)
+                    except:
+                        parser.error("invalid line count: \'{0}\'".
+                                     format(options.head_count))
+                    if numlines == 0:
+                        exit(0)
                 input_file = args[0]
                 try:
                     temp_f = open(input_file, 'r')
