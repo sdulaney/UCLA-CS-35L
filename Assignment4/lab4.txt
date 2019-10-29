@@ -1,0 +1,135 @@
+Commands used for Lab:
+NOTE: Trivial commands may not be explained.
+
+# Download the old version of coreutils with bugs.
+wget https://web.cs.ucla.edu/classes/fall19/cs35L/assign/coreutils-with-bug.tar.gz
+
+# Extract the file.
+tar -xvf coreutils-with-bug.tar.gz
+
+1. Build this old version of coreutils as-is, and then again with this renaming patch. What problems did you have when building it as-is, and why did the renaming patch fix them?
+
+# Build this old version of coreutils as-is.
+# Note we set the value of CFLAGS to use gcc option -g (add debug info to the generated executable) and option -O0 (turn off optimizations).
+cd coreutils-with-bug/
+mkdir ../as-is
+./configure CFLAGS='-g -O0' --prefix=/u/cs/ugrad/stewart/Assignment4/as-is
+make
+
+# Building the old version of coreutils as-is produces some output that seems normal and then the following error. It seems that multiple function declarations for "futimens" is causing a conflicting types error and the compilation of the source file "utimecmp.c" to fail (due to including the file "utimens.h"), and so the make command fails as well.
+...
+if gcc -DHAVE_CONFIG_H -DLIBDIR=\"/u/cs/ugrad/stewart/Assignment4/as-is/lib\" -I. -I. -I..  -I.. -I.   -g -O2 -MT utimecmp.o -MD -MP -MF ".deps/utimecmp.Tpo" -c -o utimecmp.o utimecmp.c; \
+then mv -f ".deps/utimecmp.Tpo" ".deps/utimecmp.Po"; else rm -f ".deps/utimecmp.Tpo"; exit 1; fi
+In file included from utimecmp.c:41:
+utimens.h:2:5: error: conflicting types for 'futimens'
+    2 | int futimens (int, char const *, struct timespec const [2]);
+      |     ^~~~~~~~
+In file included from utimecmp.h:25,
+                 from utimecmp.c:25:
+/usr/include/sys/stat.h:373:12: note: previous declaration of 'futimens' was here
+  373 | extern int futimens (int __fd, const struct timespec __times[2]) __THROW;
+      |            ^~~~~~~~
+make[3]: *** [Makefile:659: utimecmp.o] Error 1
+make[3]: Leaving directory '/w/home.25/cs/ugrad/stewart/Assignment4/coreutils-with-bug/lib'
+make[2]: *** [Makefile:414: all] Error 2
+make[2]: Leaving directory '/w/home.25/cs/ugrad/stewart/Assignment4/coreutils-with-bug/lib'
+make[1]: *** [Makefile:419: all-recursive] Error 1
+make[1]: Leaving directory '/w/home.25/cs/ugrad/stewart/Assignment4/coreutils-with-bug'
+make: *** [Makefile:357: all] Error 2
+
+# Build the old version of coreutils again with the renaming patch.
+wget https://web.cs.ucla.edu/classes/fall19/cs35L/assign/coreutils.diff
+patch -p0 < coreutils.diff
+
+Output of the previous command:
+patching file lib/utimens.c
+patching file lib/utimens.h
+patching file src/copy.c
+patching file src/tee.c
+patching file src/touch.c
+
+# make runs successfully after applying the renaming patch.
+make
+
+# The renaming patch fixes the conflicting types problem due to multiple function declarations for "futimens" because it renames the function defined in the files "utimens.h" and "utimens.c" from "futimens" to "coreutils_futimens". The patch also updates the function name in files that call that function, and renames another function "tee" to "coreutils_tee". 
+
+2. Reproduce the problem.
+
+# Install the as-is version of coreutils in a temporary directory Assignment4/as-is.
+make install
+
+# Create a shell script test-as-is.sh to reproduce the problem. 
+emacs test-as-is.sh
+chmod +x test-as-is.sh
+./test-as-is.sh
+
+Output of the previous command:
+# Note wwi-armistice-cs35L is incorrectly at the top of the list instead of the bottom, as expected.
+-rw-r--r-- 1 stewart csugrad 0 1918-11-11 11:00:00.000000000 +0000 wwi-armistice-cs35L
+-rw-r--r-- 1 stewart csugrad 0 2019-10-28 23:11:47.073436195 +0000 now1
+-rw-r--r-- 1 stewart csugrad 0 2019-10-28 23:11:46.068405339 +0000 now
+
+Contents of test-as-is.sh:
+#!/bin/sh
+
+tmp=$(mktemp -d)
+cd $tmp
+touch -d '1918-11-11 11:00 GMT' wwi-armistice-cs35L
+touch now
+sleep 1
+touch now1
+TZ=UTC0 ~/Assignment4/as-is/bin/ls -lt --full-time wwi-armistice-cs35L now now1
+cd ~/Assignment4
+rm -fr $tmp
+
+3. Use a debugger to figure out what went wrong and to fix the corresponding source file.
+
+# Create and cd into temporary directory.
+tmp=$(mktemp -d)
+cd $tmp
+
+# Create test files.
+touch -d '1918-11-11 11:00 GMT' wwi-armistice-cs35L
+touch now
+sleep 1
+touch now1
+
+# Start gdb, specifying the old version of coreutils as-is as the executable to debug.
+TZ=UTC0 gdb ~/Assignment4/as-is/bin/ls
+
+# List all functions in the program.
+(gdb) info functions
+
+# Looking through the functions listed under ls.c, two stand out: cmp_mtime and compare_mtime. This is because the ls option -t that we're debugging sorts by modification time or "mtime". Using emacs to poke around in the source file ls.c, I determine that compare_mtime calls cmp_mtime. So we can set a breakpoint at compare_mtime and step through both functions from there.
+
+# Pause program at the first line of compare_mtime every time it is called.
+(gdb) break compare_mtime
+
+# Run the executable with the given arguments that we know produce incorrect output.
+(gdb) run -lt --full-time wwi-armistice-cs35L now now1
+
+# List source code lines around the current line so we know what we're about to step in to.
+(gdb) list
+
+# It looks like the comparison calculation is not done in compare_mtime, so we step to the next source line.
+(gdb) s
+
+# This brings us to the function cmp_mtime. 
+(gdb) list
+# Again, it looks like the comparison calculation is not done here, so we step to the next source line.
+(gdb) s
+
+# We step 5 more times through calls to the function get_stat_mtime in lib/stat-time.h (which doesn't contain a comparison calculation), which is called on the arguments to timespec_cmp. This brings us to the function timespec_cmp in lib/timespec.h.
+(gdb) list
+# Listing source code lines around the current line shows the first comparison calculation so far (two subtractions in the function timespec_cmp).
+
+
+
+
+
+
+
+4. Construct a new patch file lab4.diff containing your coreutils fixes, in the form of a ChangeLog entry followed by a diff -u patch.
+
+
+5. Also, try to reproduce the problem in your home directory on the SEASnet Linux servers, instead of using the $tmp directory. When running the above test case, use the already-installed touch and ls utilities instead of the old version of coreutils. How well does SEASnet do?
