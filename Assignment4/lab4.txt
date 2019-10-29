@@ -1,13 +1,14 @@
-Commands used for Lab:
-NOTE: Trivial commands may not be explained.
+Laboratory: Debugging a C program
+
+NOTE: Per the spec, this is a log of what I did in the lab so that I can reproduce the results later and I've briefly noted down what I did and what happened. Trivial commands may or may not be explained.
+
+##### Step 1. Build this old version of coreutils as-is, and then again with this renaming patch.
 
 # Download the old version of coreutils with bugs.
 wget https://web.cs.ucla.edu/classes/fall19/cs35L/assign/coreutils-with-bug.tar.gz
 
 # Extract the file.
 tar -xvf coreutils-with-bug.tar.gz
-
-1. Build this old version of coreutils as-is, and then again with this renaming patch. What problems did you have when building it as-is, and why did the renaming patch fix them?
 
 # Build this old version of coreutils as-is.
 # Note we set the value of CFLAGS to use gcc option -g (add debug info to the generated executable) and option -O0 (turn off optimizations).
@@ -16,7 +17,7 @@ mkdir ../as-is
 ./configure CFLAGS='-g -O0' --prefix=/u/cs/ugrad/stewart/Assignment4/as-is
 make
 
-# Building the old version of coreutils as-is produces some output that seems normal and then the following error. It seems that multiple function declarations for "futimens" is causing a conflicting types error and the compilation of the source file "utimecmp.c" to fail (due to including the file "utimens.h"), and so the make command fails as well.
+Output of previous command:
 ...
 if gcc -DHAVE_CONFIG_H -DLIBDIR=\"/u/cs/ugrad/stewart/Assignment4/as-is/lib\" -I. -I. -I..  -I.. -I.   -g -O2 -MT utimecmp.o -MD -MP -MF ".deps/utimecmp.Tpo" -c -o utimecmp.o utimecmp.c; \
 then mv -f ".deps/utimecmp.Tpo" ".deps/utimecmp.Po"; else rm -f ".deps/utimecmp.Tpo"; exit 1; fi
@@ -37,6 +38,13 @@ make[1]: *** [Makefile:419: all-recursive] Error 1
 make[1]: Leaving directory '/w/home.25/cs/ugrad/stewart/Assignment4/coreutils-with-bug'
 make: *** [Makefile:357: all] Error 2
 
+##### Question 1: What problems did you have when building it as-is?
+- Building the old version of coreutils as-is produces some omitted output that seems normal and then the error "conflicting types for 'futimens'" shown above.
+- From my understanding, this is because the compiler finds two different function signatures for "futimens", but C does not support function overloading.
+- During the preprocessing of utimecmp.c, there is a function definition for "futimens" inserted from /usr/include/sys/stat.h and then a function declaration for "futimens" inserted from utimens.h.
+- The function declaration from utimens.h has a different number of arguments, resulting in the conflicting types.
+- This causes the error and the compilation of the source file utimecmp.c to fail, and the make command to fail as well.
+
 # Build the old version of coreutils again with the renaming patch.
 wget https://web.cs.ucla.edu/classes/fall19/cs35L/assign/coreutils.diff
 patch -p0 < coreutils.diff
@@ -51,9 +59,14 @@ patching file src/touch.c
 # make runs successfully after applying the renaming patch.
 make
 
-# The renaming patch fixes the conflicting types problem due to multiple function declarations for "futimens" because it renames the function defined in the files "utimens.h" and "utimens.c" from "futimens" to "coreutils_futimens". The patch also updates the function name in files that call that function, and renames another function "tee" to "coreutils_tee". 
+##### Question 2: Why did the renaming patch fix them?
+- The renaming patch fixes the conflicting types problem due to multiple function signatures for "futimens" because it renames one of the conflicting functions.
+- The function declared in utimens.h and defined in utimens.c is renamed from "futimens" to "coreutils_futimens".
+- The patch also updates the function name in files that call that function.
+- As a result, both "coreutils_futimens" and the other "futimens" (now the only function "futimens", from /usr/include/sys/stat.h) can be used without causing the conflicting types error, because they have different names.
+- The patch also renames another function "tee" to "coreutils_tee".
 
-2. Reproduce the problem.
+##### Step 2. Reproduce the problem.
 
 # Install the as-is version of coreutils in a temporary directory Assignment4/as-is.
 make install
@@ -82,7 +95,7 @@ TZ=UTC0 ~/Assignment4/as-is/bin/ls -lt --full-time wwi-armistice-cs35L now now1
 cd ~/Assignment4
 rm -fr $tmp
 
-3. Use a debugger to figure out what went wrong and to fix the corresponding source file.
+##### Step 3. Use a debugger to figure out what went wrong and to fix the corresponding source file.
 
 # Create and cd into temporary directory.
 tmp=$(mktemp -d)
@@ -107,6 +120,7 @@ TZ=UTC0 gdb ~/Assignment4/as-is/bin/ls
 
 # Run the executable with the given arguments that we know produce incorrect output.
 (gdb) run -lt --full-time wwi-armistice-cs35L now now1
+# This brings us to compare_mtime at ls.c:2884
 
 # List source code lines around the current line so we know what we're about to step in to.
 (gdb) list
@@ -114,22 +128,69 @@ TZ=UTC0 gdb ~/Assignment4/as-is/bin/ls
 # It looks like the comparison calculation is not done in compare_mtime, so we step to the next source line.
 (gdb) s
 
-# This brings us to the function cmp_mtime. 
+# This brings us to the function cmp_mtime at ls.c:2880. 
 (gdb) list
 # Again, it looks like the comparison calculation is not done here, so we step to the next source line.
 (gdb) s
 
-# We step 5 more times through calls to the function get_stat_mtime in lib/stat-time.h (which doesn't contain a comparison calculation), which is called on the arguments to timespec_cmp. This brings us to the function timespec_cmp in lib/timespec.h.
+# We step 4 more times through calls to the function get_stat_mtime at ../lib/stat-time.h:121 (which doesn't contain a comparison calculation), which is called on the arguments to timespec_cmp. 
+
+# This brings us to the function timespec_cmp at ../lib/timespec.h:48.
 (gdb) list
 # Listing source code lines around the current line shows the first comparison calculation so far (two subtractions in the function timespec_cmp).
 
+Output of the previous command:
+
+43     /* Return negative, zero, positive if A < B, A == B, A > B, respectively.
+44        Assume the nanosecond components are in range, or close to it.  */
+45	  static inline int
+46	  timespec_cmp (struct timespec a, struct timespec b)
+47	  {
+48	    int diff = a.tv_sec - b.tv_sec;
+49	      return diff ? diff : a.tv_nsec - b.tv_nsec;
+50	      }
+51
+52	# if ! HAVE_DECL_NANOSLEEP
+
+# Since the subtractions present the possibility of integer overflow, we print the values of the variables diff, a.tv_sec, and b.tv_sec after ../lib/timespec.h:48 and a.tv_nsec - b.tv_nsec, a.tv_nsec, and b.tv_nsec after ../lib/timespec.h:49.
+
+(gdb) print diff	 # $14 = 2
+(gdb) print a.tv_sec	 # $15 = 1572336163
+(gdb) print b.tv_sec	 # $16 = 1572336161
+(gdb) s
+(gdb) print a.tv_nsec - b.tv_nsec	# $20 = 341071714 
+(gdb) print a.tv_nsec			# $18 = 895014473
+(gdb) print b.tv_nsec			# $19 = 553942759
+
+# This correctly returns positive (2) when A > B, so we continue to the next breakpoint.
+(gdb) c
+# We repeat the steps from above and print the values of the same variables:
+
+(gdb) print diff      # $21 = -1108805133
+(gdb) print a.tv_sec  # $22 = 1572336163
+(gdb) print b.tv_sec  # $23 = -1613826000
+(gdb) s
+(gdb) print a.tv_nsec - b.tv_nsec	# $24 = 895014473
+(gdb) print a.tv_nsec			# $25 = 895014473
+(gdb) print b.tv_nsec			# $26 = 0
+
+##### What went wrong
+- In this case, timespec_cmp incorrectly returns negative (-1108805133) even though A > B.
+- This indicates an overflow because (assuming Two's Complement representation) two numbers with different signs are subtracted and the result has the same sign as the subtrahend.
+- Indeed, the result of 1572336163 - (-1613826000) = 3186162163 is greater than the maximum Two's Complement value 2^31 - 1 = 2,147,483,647 that can be represented with a 32 bit int, indicating the result has "wrapped around" the maximum.
+
+# Quit gdb since we've identified what went wrong.
+(gdb) quit
+
+# TODO: Fix the corresponding source file.
 
 
 
 
 
+##### Step 4. Construct a new patch file lab4.diff containing your coreutils fixes, in the form of a ChangeLog entry followed by a diff -u patch.
 
-4. Construct a new patch file lab4.diff containing your coreutils fixes, in the form of a ChangeLog entry followed by a diff -u patch.
 
+##### Step 5. Also, try to reproduce the problem in your home directory on the SEASnet Linux servers, instead of using the $tmp directory. When running the above test case, use the already-installed touch and ls utilities instead of the old version of coreutils. 
 
-5. Also, try to reproduce the problem in your home directory on the SEASnet Linux servers, instead of using the $tmp directory. When running the above test case, use the already-installed touch and ls utilities instead of the old version of coreutils. How well does SEASnet do?
+##### Question 3: How well does SEASnet do (and why)?
