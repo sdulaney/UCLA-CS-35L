@@ -177,19 +177,72 @@ Output of the previous command:
 ##### What went wrong
 - In this case, timespec_cmp incorrectly returns negative (-1108805133) even though A > B.
 - This indicates an overflow because (assuming Two's Complement representation) two numbers with different signs are subtracted and the result has the same sign as the subtrahend.
-- Indeed, the result of 1572336163 - (-1613826000) = 3186162163 is greater than the maximum Two's Complement value 2^31 - 1 = 2,147,483,647 that can be represented with a 32 bit int, indicating the result has "wrapped around" the maximum.
+- Indeed, the result of 1572336163 - (-1613826000) = 3186162163 is greater than the maximum Two's Complement value 2^31 - 1 = 2,147,483,647 that can be represented with a signed 32 bit int, indicating the result has "wrapped around" the maximum.
 
 # Quit gdb since we've identified what went wrong.
 (gdb) quit
 
-# TODO: Fix the corresponding source file.
+# Fix the corresponding source file.
+emacs coreutils-with-bug/lib/timespec.h
 
+# Looking at the comment explaining the intended return value, we can "Return negative, zero, positive if A < B, A == B, A > B, respectively." without doing subtraction. The updated function is below:
 
+/* Return negative, zero, positive if A < B, A == B, A > B, respectively.
+   Assume the nanosecond components are in range, or close to it.  */
+static inline int
+timespec_cmp (struct timespec a, struct timespec b)
+{
+  if (a.tv_sec < b.tv_sec)
+    return -1;
+  else if (a.tv_sec > b.tv_sec)
+    return 1;
+  else
+    {
+      if (a.tv_nsec < b.tv_nsec)
+      return -1;
+      else if (a.tv_nsec > b.tv_nsec)
+      return 1;
+      else
+      return 0;
+    }
+}
 
+# Test the fix by compiling, installing in a temporary directory, and using the test case given in the spec (using adapted version of the test shell script above, test-with-fix.sh).
+mkdir with-fix
+cd coreutils-with-bug/
+./configure CFLAGS='-g -O0' --prefix=/u/cs/ugrad/stewart/Assignment4/with-fix
+make
+make install
+cd ..
+cp test-as-is.sh test-with-fix.sh
+emacs test-with-fix.sh
+# Change ~/Assignment4/as-is/bin/ls to ~/Assignment4/with-fix/bin/ls.
+./test-with-fix.sh
 
+Output of previous command:
+-rw-r--r-- 1 stewart csugrad 0 2019-10-29 20:50:12.244233667 +0000 now1
+-rw-r--r-- 1 stewart csugrad 0 2019-10-29 20:50:11.240203034 +0000 now
+-rw-r--r-- 1 stewart csugrad 0 1918-11-11 11:00:00.000000000 +0000 wwi-armistice-cs35L
+
+# This shows that the updated function timespec_cmp fixes the output of the ls program with option -t for the test case given in the spec. I could test it with further edge cases but this seems beyond the scope of the lab.
 
 ##### Step 4. Construct a new patch file lab4.diff containing your coreutils fixes, in the form of a ChangeLog entry followed by a diff -u patch.
 
+# Extract another copy of coreutils since I forgot to make a copy of the original source file lib/timespec.h.
+mkdir coreutils-with-bug-original
+tar -xvf coreutils-with-bug.tar.gz -C coreutils-with-bug-original
+
+# Add a new entry to the change log file in emacs.
+emacs coreutils-with-bug/lib/timespec.h
+C-x 4 a
+# Type change log entry and copy to emacs kill ring.
+
+# Create a patch using diff with option -u in another terminal session.
+diff -u coreutils-with-bug-original/coreutils-with-bug/lib/timespec.h coreutils-with-bug/lib/timespec.h > lab4.diff
+
+# Open lab4.diff in emacs and paste change log entry into it.
+C-x C-f ~/Assignment4/lab4.diff
+C-y C-x C-c
 
 ##### Step 5. Also, try to reproduce the problem in your home directory on the SEASnet Linux servers, instead of using the $tmp directory. When running the above test case, use the already-installed touch and ls utilities instead of the old version of coreutils. 
 
