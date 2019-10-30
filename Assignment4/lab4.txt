@@ -246,4 +246,23 @@ C-y C-x C-c
 
 ##### Step 5. Also, try to reproduce the problem in your home directory on the SEASnet Linux servers, instead of using the $tmp directory. When running the above test case, use the already-installed touch and ls utilities instead of the old version of coreutils. 
 
+cd
+touch -d '1918-11-11 11:00 GMT' wwi-armistice-cs35L
+touch now
+sleep 1
+touch now1
+TZ=UTC0 ls -lt --full-time wwi-armistice-cs35L now now1
+
+Output of previous command:
+-rw-r--r-- 1 stewart csugrad 0 2054-12-17 17:28:16.000000000 +0000 wwi-armistice-cs35L
+-rw-r--r-- 1 stewart csugrad 0 2019-10-29 22:33:41.684994000 +0000 now1
+-rw-r--r-- 1 stewart csugrad 0 2019-10-29 22:33:36.866965000 +0000 now
+
 ##### Question 3: How well does SEASnet do (and why)?
+- SEASnet does poorly. Note that the mtime (modified time) for wwi-armistice-cs35L incorrectly shows 2054-12-17 17:28:16 instead of 1918-11-11 11:00:00 and the file is incorrectly at the top of the list instead of the bottom (for a different reason than the bug we patched above).
+- This is because of the way SEASnet (my home directory) stores timestamps (seconds since the Unix epoch, 00:00:00 UTC on 1 January 1970, minus leap seconds).
+- The SEASnet NFS filesystem uses unsigned 32 bit timestamps while the local filesystem on the Linux server uses signed 32 bit timestamps.
+- As a result, on SEASnet the binary representation of the timestamp (1001 1111 1100 1110 1111 1000 0011 0000) is interpreted as 2681141296 seconds since the Unix epoch, which is 12/17/2054 @ 5:28pm.
+- Since directories under /tmp use the local filesystem, the same binary representation of the timestamp is interpreted as -1613826000 seconds before the Unix epoch there, which is 11/11/1918 @ 11:00am.
+
+
