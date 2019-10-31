@@ -10,7 +10,14 @@ int frobcmp(char const * a, char const * b)
     {
 	char a_unfrob = *a ^ 0b00101010;
 	char b_unfrob = *b ^ 0b00101010;
-	return a_unfrob - b_unfrob;
+	if (a_unfrob > b_unfrob)
+	{
+	    return 1;
+	}
+	else if (a_unfrob < b_unfrob)
+	{
+	    return -1;
+	}
     }
     a++;
     b++;
@@ -32,6 +39,7 @@ int frobcmp(char const * a, char const * b)
 
 int main()
 {
+  // Unit tests for frobcmp 
   // a > b
   assert(frobcmp("*{_CIA\030\031 ", "*`_GZY\v ") > 0);
   // a < b
