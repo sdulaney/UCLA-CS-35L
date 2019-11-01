@@ -50,8 +50,22 @@ out_size=$(stat -c%s out)
 size_difference=$(($out_size-$rt2_size))
 test $size_difference -eq 0 || test $size_difference -eq 1 || echo "Test $test: wrong STDOUT"
 
-# Test input error (when STDIN is closed).
-#test=2
-#./sfrob <&- > out.1 2> out.2
+##### Test 6: Test input error (when STDIN is closed).
+test=6
+./sfrob <&- > out.1 2> out.2
+test $? -eq 1 || echo "Test $test: wrong exit code"
+cmp -s out.2 /dev/null && echo "Test $test: STDERR empty"
+cmp out.1 /dev/null || echo "Test $test: STDOUT not empty"
+
+# Note: could not simulate this error by closing STDOUT.
+##### Test 7: Test output error (when STDOUT is closed).
+#test=7
+#printf '*~BO *{_CIA *hXE]D *LER #@_GZY #E\\OX #^BO #FKPS #NEM\4' | ./sfrob >&- > out.1 2> out.2
 #test $? -eq 1 || echo "Test $test: wrong exit code"
-#cmp out.2 /dev/null && echo "Test $test: wrong STDERR"
+#cmp -s out.2 /dev/null && echo "Test $test: STDERR empty"
+#cmp out.1 /dev/null || echo "Test $test: STDOUT not empty"
+
+test=8
+ulimit -v 64
+cat rt1.jar | ./sfrob > out
+test $? -eq 1 || echo "Test $test: wrong exit code"

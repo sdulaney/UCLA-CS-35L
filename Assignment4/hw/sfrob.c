@@ -63,7 +63,7 @@ void check_output_error(int ret_code, char** wordlist, int wordlist_len)
 	if (ferror(stdout)) 
         {
 	    free_memory(wordlist, wordlist_len);
-	    fprintf(stderr, "Input error.\n");
+	    fprintf(stderr, "Output error.\n");
 	    exit(1);
         }
     }
