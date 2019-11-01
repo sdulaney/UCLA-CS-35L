@@ -4,7 +4,7 @@
 # __STDC_VERSION__ is 201710 (c17, a bugfix version of c11)
 gcc -g -O0 sfrob.c -o sfrob
 
-# Test case given in spec.
+##### Test 1: Test case given in spec.
 test=1
 printf '*~BO *{_CIA *hXE]D *LER #@_GZY #E\\OX #^BO #FKPS #NEM\4' | ./sfrob | od -ta > out
 test $? -eq 0 || echo "Test $test: wrong exit code"
@@ -15,8 +15,28 @@ echo '0000000   *   h   X   E   ]   D  sp   *   {   _   C   I   A  sp   *   ~
 0000066' > expected_output
 cmp expected_output out > /dev/null || echo "Test $test: wrong STDOUT"
 
-# Test input error (when STDIN is closed).
+##### Test 2: Expect the same output as Test 1 when there is a trailing space.
 test=2
-./sfrob <&- > out.1 2> out.2
-test $? -eq 1 || echo "Test $test: wrong exit code"
-cmp out.2 /dev/null && echo "Test $test: wrong STDERR"
+printf '*~BO *{_CIA *hXE]D *LER #@_GZY #E\\OX #^BO #FKPS #NEM\4 ' | ./sfrob | od -ta > out
+test $? -eq 0 || echo "Test $test: wrong exit code"
+cmp expected_output out > /dev/null || echo "Test $test: wrong STDOUT"
+
+##### Test 3: Test on empty file.
+test=3
+touch empty
+cat empty | ./sfrob > out
+test $? -eq 0 || echo "Test $test: wrong exit code"
+cmp empty out > /dev/null || echo "Test $test: wrong STDOUT"
+
+##### Test 4: Test on relatively large file (rt1.jar - /usr/local/cs/jdk1.8.0_31/jre/lib/rt.jar).
+test=4
+cat rt1.jar | ./sfrob > out
+test $? -eq 0 || echo "Test $test: wrong exit code"
+# TODO: Test output 
+# cmp expected_output out > /dev/null || echo "Test $test: wrong STDOUT"
+
+# Test input error (when STDIN is closed).
+#test=2
+#./sfrob <&- > out.1 2> out.2
+#test $? -eq 1 || echo "Test $test: wrong exit code"
+#cmp out.2 /dev/null && echo "Test $test: wrong STDERR"
