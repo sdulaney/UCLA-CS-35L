@@ -56,6 +56,30 @@ void free_memory(char** wordlist, int wordlist_len)
     free(wordlist);
 }
 
+void check_output_error(int ret_code, char** wordlist, int wordlist_len)
+{
+    if (ret_code == EOF)
+    {
+	if (ferror(stdout)) 
+        {
+	    free_memory(wordlist, wordlist_len);
+	    fprintf(stderr, "Input error.\n");
+	    exit(1);
+        }
+    }
+}
+
+void check_mem_alloc_error(void* ptr, char** wordlist, int wordlist_len)
+{
+    if (ptr == NULL)
+    {
+	free_memory(wordlist, wordlist_len);
+        fprintf(stderr, "Memory allocation error.\n");
+        exit(1);
+    }
+}
+
+
 int main()
 {
   // Unit tests for frobcmp 
@@ -103,14 +127,15 @@ int main()
 	  break;
       }
 
-      // TODO: Update rest of while loop
       if (word == NULL)
       {
 	  word = (char*) malloc(sizeof(char));
+	  check_mem_alloc_error(word, wordlist, wordlist_len);
       }
       else
       {
 	  word = (char*) realloc(word, (word_len + 1) * sizeof(char));
+	  check_mem_alloc_error(word, wordlist, wordlist_len);
       }
       word[word_len] = ch;
       word_len++;
@@ -120,10 +145,12 @@ int main()
 	  if (wordlist == NULL)
 	  {
 	      wordlist = (char**) malloc(sizeof(char*));
+	      check_mem_alloc_error(word, wordlist, wordlist_len);
 	  }
 	  else
 	  {
 	      wordlist = (char**) realloc(wordlist, (wordlist_len + 1) * sizeof(char*));
+	      check_mem_alloc_error(word, wordlist, wordlist_len);
 	  }
           wordlist[wordlist_len] = word;
 	  wordlist_len++;
@@ -135,15 +162,18 @@ int main()
   if (word_len > 0)
   {
       word = (char*) realloc(word, (word_len + 1) * sizeof(char));
+      check_mem_alloc_error(word, wordlist, wordlist_len);
       word[word_len] = ' ';
       word_len++;
       if (wordlist == NULL)
       {
 	  wordlist = (char**) malloc(sizeof(char*));
+	  check_mem_alloc_error(word, wordlist, wordlist_len);
       }
       else
       {
 	  wordlist = (char**) realloc(wordlist, (wordlist_len + 1) * sizeof(char*));
+	  check_mem_alloc_error(word, wordlist, wordlist_len);
       }
       wordlist[wordlist_len] = word;
       wordlist_len++;
@@ -155,11 +185,14 @@ int main()
 
   for (int i = 0; i < wordlist_len; i++)
   {
+      int putchar_ret_code = 0;
       for (int j = 0; wordlist[i][j] != ' '; j++)
       {
-	  putchar(wordlist[i][j]);
+	  putchar_ret_code = putchar(wordlist[i][j]);
+	  check_output_error(putchar_ret_code, wordlist, wordlist_len);
       }
-      putchar(' ');
+      putchar_ret_code = putchar(' ');
+      check_output_error(putchar_ret_code, wordlist, wordlist_len);
   }
 
   free_memory(wordlist, wordlist_len);
