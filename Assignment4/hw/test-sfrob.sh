@@ -1,8 +1,13 @@
 #!/bin/sh
 
+option=$1
+
 # Using default C version per Piazza: https://piazza.com/class/k0zogkkf73r5dj?cid=268
 # __STDC_VERSION__ is 201710 (c17, a bugfix version of c11)
-gcc -g -O0 sfrob.c -o sfrob
+if [ $# -eq 0 ]
+then
+    gcc -g -O0 sfrob.c -o sfrob
+fi
 
 ##### Test 1: Test case given in spec.
 test=1
@@ -32,8 +37,29 @@ cmp empty out > /dev/null || echo "Test $test: wrong STDOUT"
 test=4
 cat rt1.jar | ./sfrob > out
 test $? -eq 0 || echo "Test $test: wrong exit code"
-# TODO: Test output 
-# cmp expected_output out > /dev/null || echo "Test $test: wrong STDOUT"
+# out should be the same size or 1 byte larger than rt1.jar (when append trailing space)
+rt1_size=$(stat -c%s rt1.jar)
+out_size=$(stat -c%s out)
+size_difference=$(($out_size-$rt1_size))
+test $size_difference -eq 0 || test $size_difference -eq 1 || echo "Test $test: wrong STDOUT"
+if [ $# -eq 1 ] && [ $option -eq 1 ]
+then
+    cmp out ../out_rt1 || echo "Test $test: wrong STDOUT"
+fi
+
+##### Test 5: Test on relatively large file (rt2.jar - /usr/local/cs/jdk1.8.0_45/jre/lib/rt.jar).
+test=5
+cat rt2.jar | ./sfrob > out
+test $? -eq 0 || echo "Test $test: wrong exit code"
+# out should be the same size or 1 byte larger than rt2.jar (when append trailing space)
+rt2_size=$(stat -c%s rt2.jar)
+out_size=$(stat -c%s out)
+size_difference=$(($out_size-$rt2_size))
+test $size_difference -eq 0 || test $size_difference -eq 1 || echo "Test $test: wrong STDOUT"
+if [ $# -eq 1 ] && [ $option -eq 1 ]
+then
+    cmp out ../out_rt2 || echo "Test $test: wrong STDOUT"
+fi
 
 # Test input error (when STDIN is closed).
 #test=2

@@ -47,6 +47,15 @@ int cmp(const void* x, const void* y)
     return frobcmp(a, b);
 }
 
+void free_memory(char** wordlist, int wordlist_len)
+{
+    for (int i = 0; i < wordlist_len; i++)
+    {
+	free(wordlist[i]);
+    }
+    free(wordlist);
+}
+
 int main()
 {
   // Unit tests for frobcmp 
@@ -74,31 +83,40 @@ int main()
   char* word = NULL;
   int word_len = 0;
   
-  // Read from STDIN byte by byte until getchar returns EOF (indicating failure).
+  // Read from STDIN byte by byte.
   int ch;
-  while (ch = getchar())
+  while (1)
   {
-      if (ch != EOF)
+      ch = getchar();
+
+      // If getchar failed due to an error besides end-of-file condition
+      if (ferror(stdin))
       {
-	  if (word == NULL)
-	  {
-	      word = (char*) malloc(sizeof(char));
-	  }
-	  else
-	  {
-	      word = (char*) realloc(word, (word_len + 1) * sizeof(char));
-	  }
-	  word[word_len] = ch;
-	  word_len++;
+	  free_memory(wordlist, wordlist_len);
+	  fprintf(stderr, "Input error.\n");
+	  exit(1);
       }
-      if (ch == ' ' || (ch == EOF && word_len > 0))
+      
+      // If getchar failed due to end-of-file condition
+      if (feof(stdin))
       {
-	  if (ch == EOF && word_len > 0)
-	  {
-	      word = (char*) realloc(word, (word_len + 1) * sizeof(char));
-	      word[word_len] = ' ';
-	      word_len++;
-	  }
+	  break;
+      }
+
+      // TODO: Update rest of while loop
+      if (word == NULL)
+      {
+	  word = (char*) malloc(sizeof(char));
+      }
+      else
+      {
+	  word = (char*) realloc(word, (word_len + 1) * sizeof(char));
+      }
+      word[word_len] = ch;
+      word_len++;
+
+      if (ch == ' ')
+      {
 	  if (wordlist == NULL)
 	  {
 	      wordlist = (char**) malloc(sizeof(char*));
@@ -112,10 +130,25 @@ int main()
 	  word = NULL;
 	  word_len = 0;
       }
-      if (ch == EOF)
+  }
+
+  if (word_len > 0)
+  {
+      word = (char*) realloc(word, (word_len + 1) * sizeof(char));
+      word[word_len] = ' ';
+      word_len++;
+      if (wordlist == NULL)
       {
-	  break;
+	  wordlist = (char**) malloc(sizeof(char*));
       }
+      else
+      {
+	  wordlist = (char**) realloc(wordlist, (wordlist_len + 1) * sizeof(char*));
+      }
+      wordlist[wordlist_len] = word;
+      wordlist_len++;
+      word = NULL;
+      word_len = 0;
   }
 
   qsort(wordlist, wordlist_len, sizeof(char*), cmp);
@@ -127,10 +160,9 @@ int main()
 	  putchar(wordlist[i][j]);
       }
       putchar(' ');
-      free(wordlist[i]);
   }
 
-  free(wordlist);
+  free_memory(wordlist, wordlist_len);
  
   
   return 0;
