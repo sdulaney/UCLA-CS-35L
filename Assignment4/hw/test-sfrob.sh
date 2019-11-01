@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# Using default C version per Piazza: https://piazza.com/class/k0zogkkf73r5dj?cid=268
+# __STDC_VERSION__ is 201710 (c17, a bugfix version of c11)
+gcc -g -O0 sfrob.c -o sfrob
+
 # Test case given in spec.
 test=1
 printf '*~BO *{_CIA *hXE]D *LER #@_GZY #E\\OX #^BO #FKPS #NEM\4' | ./sfrob | od -ta > out

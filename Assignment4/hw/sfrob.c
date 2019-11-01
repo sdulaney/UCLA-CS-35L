@@ -75,7 +75,7 @@ int main()
   int word_len = 0;
   
   // Read from STDIN byte by byte until getchar returns EOF (indicating failure).
-  char ch;
+  int ch;
   while (ch = getchar())
   {
       if (ch != EOF)
