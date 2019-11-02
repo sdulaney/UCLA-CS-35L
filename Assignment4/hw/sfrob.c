@@ -195,8 +195,7 @@ int main()
       check_output_error(putchar_ret_code, wordlist, wordlist_len);
   }
 
-  free_memory(wordlist, wordlist_len);
- 
+  free_memory(wordlist, wordlist_len); 
   
   return 0;
 }

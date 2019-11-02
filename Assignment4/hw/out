@@ -1,13 +1,13 @@
                                                                     (running)
-Tgid:	46940
+Tgid:	2064
 Ngid:	0
-Pid:	46940
-PPid:	46694
+Pid:	2064
+PPid:	1996
 TracerPid:	0
 Uid:	13037	13037	13037	13037
 Gid:	130	130	130	130
 FDSize:	256
-Groups:	130 28 280 32 316 356 356 0 0 0 0 1940 132 1144 76 4508 4508 
+Groups:	130 280 32 32 316 352 352 0 0 0 0 1940 132 1144 72 4508 4508 
 VmPeak:	 kB
 RssAnon:	 kB
 RssFile:	 kB
