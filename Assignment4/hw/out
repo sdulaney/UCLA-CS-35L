@@ -1,0 +1,49 @@
+                                                                    (running)
+Tgid:	46940
+Ngid:	0
+Pid:	46940
+PPid:	46694
+TracerPid:	0
+Uid:	13037	13037	13037	13037
+Gid:	130	130	130	130
+FDSize:	256
+Groups:	130 28 280 32 316 356 356 0 0 0 0 1940 132 1144 76 4508 4508 
+VmPeak:	 kB
+RssAnon:	 kB
+RssFile:	 kB
+RssShmem:	 kB
+VmHWM:	 kB
+VmLib:	 kB
+VmLck:	 kB
+VmData:	 kB
+VmExe:	 kB
+VmRSS:	 kB
+VmSize:	 kB
+VmSwap:	 kB
+VmStk:	 kB
+VmPin:	 kB
+VmPTE:	 kB
+Threads:	1
+SigQ:	0/256738
+SigPnd:	0000000000000000
+ShdPnd:	0000000000000000
+SigBlk:	0000000000000000
+SigIgn:	0000000000000000
+SigCgt:	0000000000000000
+CapInh:	0000000000000000
+CapPrm:	0000000000000000
+CapEff:	0000000000000000
+CapBnd:	0000001fffffffff
+CapAmb:	0000000000000000
+NoNewPrivs:	0
+Seccomp:	0
+Speculation_Store_Bypass:	thread vulnerable
+Cpus_allowed:	ffff,ffffffff
+Cpus_allowed_list:	0-47
+Mems_allowed:	00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000003
+Mems_allowed_list:	0-1
+voluntary_ctxt_switches:	1
+nonvoluntary_ctxt_switches:	3
+ Name:	cat
+Umask:	0022
+State:	R 

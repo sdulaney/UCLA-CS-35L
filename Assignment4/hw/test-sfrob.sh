@@ -65,7 +65,24 @@ cmp out.1 /dev/null || echo "Test $test: STDOUT not empty"
 #cmp -s out.2 /dev/null && echo "Test $test: STDERR empty"
 #cmp out.1 /dev/null || echo "Test $test: STDOUT not empty"
 
+##### Test 8: consecutive spaces should be treated as blank lines.
 test=8
-ulimit -v 64
-cat rt1.jar | ./sfrob > out
-test $? -eq 1 || echo "Test $test: wrong exit code"
+printf '*~BO *{_CIA *hXE]D *LER #@_GZY     #E\\OX #^BO #FKPS #NEM\4' | ./sfrob > out
+test $? -eq 0 || echo "Test $test: wrong exit code"
+printf '    *hXE]D *{_CIA *~BO *LER #NEM\4 #@_GZY #FKPS #E\OX #^BO ' > expected_output
+cmp expected_output out > /dev/null || echo "Test $test: wrong STDOUT"
+
+##### Test 9: only spaces in input.
+test=9
+printf '     ' | ./sfrob > out
+test $? -eq 0 || echo "Test $test: wrong exit code"
+printf '     ' > expected_output
+cmp expected_output out > /dev/null || echo "Test $test: wrong STDOUT"
+
+# Note: STDOUT not tested.
+##### Test 10: your program should work on the file /proc/self/status, a "file" that is constantly mutating.
+test=10
+cat /proc/self/status | ./sfrob > out
+test $? -eq 0 || echo "Test $test: wrong exit code"
+#printf '     ' > expected_output
+#cmp expected_output out > /dev/null || echo "Test $test: wrong STDOUT"
