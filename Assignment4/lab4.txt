@@ -1,6 +1,7 @@
 Laboratory: Debugging a C program
 
-NOTE: Per the spec, this is a log of what I did in the lab so that I can reproduce the results later and I've briefly noted down what I did and what happened. Trivial commands may or may not be explained.
+NOTE: Per the spec, this is a log of what I did in the lab so that I can reproduce the results later and I've briefly noted down what I did and what happened. Trivial commands may or may not be
+explained.
 
 ##### Step 1. Build this old version of coreutils as-is, and then again with this renaming patch.
 
@@ -63,7 +64,8 @@ make
 - The renaming patch fixes the conflicting types problem due to multiple function signatures for "futimens" because it renames one of the conflicting functions.
 - The function declared in utimens.h and defined in utimens.c is renamed from "futimens" to "coreutils_futimens".
 - The patch also updates the function name in files that call that function.
-- As a result, both "coreutils_futimens" and the other "futimens" (now the only function "futimens", from /usr/include/sys/stat.h) can be used without causing the conflicting types error, because they have different names.
+- As a result, both "coreutils_futimens" and the other "futimens" (now the only function "futimens", from /usr/include/sys/stat.h) can be used without causing the conflicting types error, because they
+have different names.
 - The patch also renames another function "tee" to "coreutils_tee".
 
 ##### Step 2. Reproduce the problem.
@@ -113,7 +115,8 @@ TZ=UTC0 gdb ~/Assignment4/as-is/bin/ls
 # List all functions in the program.
 (gdb) info functions
 
-# Looking through the functions listed under ls.c, two stand out: cmp_mtime and compare_mtime. This is because the ls option -t that we're debugging sorts by modification time or "mtime". Using emacs to poke around in the source file ls.c, I determine that compare_mtime calls cmp_mtime. So we can set a breakpoint at compare_mtime and step through both functions from there.
+# Looking through the functions listed under ls.c, two stand out: cmp_mtime and compare_mtime. This is because the ls option -t that we're debugging sorts by modification time or "mtime". Using emacs
+to poke around in the source file ls.c, I determine that compare_mtime calls cmp_mtime. So we can set a breakpoint at compare_mtime and step through both functions from there.
 
 # Pause program at the first line of compare_mtime every time it is called.
 (gdb) break compare_mtime
@@ -152,7 +155,8 @@ Output of the previous command:
 51
 52	# if ! HAVE_DECL_NANOSLEEP
 
-# Since the subtractions present the possibility of integer overflow, we print the values of the variables diff, a.tv_sec, and b.tv_sec after ../lib/timespec.h:48 and a.tv_nsec - b.tv_nsec, a.tv_nsec, and b.tv_nsec after ../lib/timespec.h:49.
+# Since the subtractions present the possibility of integer overflow, we print the values of the variables diff, a.tv_sec, and b.tv_sec after ../lib/timespec.h:48 and a.tv_nsec - b.tv_nsec, a.tv_nsec,
+and b.tv_nsec after ../lib/timespec.h:49.
 
 (gdb) print diff	 # $14 = 2
 (gdb) print a.tv_sec	 # $15 = 1572336163
@@ -177,7 +181,8 @@ Output of the previous command:
 ##### What went wrong
 - In this case, timespec_cmp incorrectly returns negative (-1108805133) even though A > B.
 - This indicates an overflow because (assuming Two's Complement representation) two numbers with different signs are subtracted and the result has the same sign as the subtrahend.
-- Indeed, the result of 1572336163 - (-1613826000) = 3186162163 is greater than the maximum Two's Complement value 2^31 - 1 = 2,147,483,647 that can be represented with a signed 32 bit int, indicating the result has "wrapped around" the maximum.
+- Indeed, the result of 1572336163 - (-1613826000) = 3186162163 is greater than the maximum Two's Complement value 2^31 - 1 = 2,147,483,647 that can be represented with a signed 32 bit int, indicating
+the result has "wrapped around" the maximum.
 
 # Quit gdb since we've identified what went wrong.
 (gdb) quit
@@ -224,7 +229,8 @@ Output of previous command:
 -rw-r--r-- 1 stewart csugrad 0 2019-10-29 20:50:11.240203034 +0000 now
 -rw-r--r-- 1 stewart csugrad 0 1918-11-11 11:00:00.000000000 +0000 wwi-armistice-cs35L
 
-# This shows that the updated function timespec_cmp fixes the output of the ls program with option -t for the test case given in the spec. I could test it with further edge cases but this seems beyond the scope of the lab.
+# This shows that the updated function timespec_cmp fixes the output of the ls program with option -t for the test case given in the spec. I could test it with further edge cases but this seems beyond
+the scope of the lab.
 
 ##### Step 4. Construct a new patch file lab4.diff containing your coreutils fixes, in the form of a ChangeLog entry followed by a diff -u patch.
 
@@ -244,7 +250,8 @@ diff -u coreutils-with-bug-original/coreutils-with-bug/lib/timespec.h coreutils-
 C-x C-f ~/Assignment4/lab4.diff
 C-y C-x C-c
 
-##### Step 5. Also, try to reproduce the problem in your home directory on the SEASnet Linux servers, instead of using the $tmp directory. When running the above test case, use the already-installed touch and ls utilities instead of the old version of coreutils. 
+##### Step 5. Also, try to reproduce the problem in your home directory on the SEASnet Linux servers, instead of using the $tmp directory. When running the above test case, use the already-installed
+touch and ls utilities instead of the old version of coreutils. 
 
 cd
 touch -d '1918-11-11 11:00 GMT' wwi-armistice-cs35L
@@ -259,10 +266,13 @@ Output of previous command:
 -rw-r--r-- 1 stewart csugrad 0 2019-10-29 22:33:36.866965000 +0000 now
 
 ##### Question 3: How well does SEASnet do (and why)?
-- SEASnet does poorly. Note that the mtime (modified time) for wwi-armistice-cs35L incorrectly shows 2054-12-17 17:28:16 instead of 1918-11-11 11:00:00 and the file is incorrectly at the top of the list instead of the bottom (for a different reason than the bug we patched above).
+- SEASnet does poorly. Note that the mtime (modified time) for wwi-armistice-cs35L incorrectly shows 2054-12-17 17:28:16 instead of 1918-11-11 11:00:00 and the file is incorrectly at the top of the
+list instead of the bottom (for a different reason than the bug we patched above).
 - This is because of the way SEASnet (my home directory) stores timestamps (seconds since the Unix epoch, 00:00:00 UTC on 1 January 1970, minus leap seconds).
 - The SEASnet NFS filesystem uses unsigned 32 bit timestamps while the local filesystem on the Linux server uses signed 32 bit timestamps.
-- As a result, on SEASnet the binary representation of the timestamp (1001 1111 1100 1110 1111 1000 0011 0000) is incorrectly interpreted as 2681141296 seconds since the Unix epoch, which is 12/17/2054 @ 5:28pm.
-- Since directories under /tmp use the local filesystem, the same binary representation of the timestamp is correctly interpreted as -1613826000 seconds before the Unix epoch there, which is 11/11/1918 @ 11:00am.
+- As a result, on SEASnet the binary representation of the timestamp (1001 1111 1100 1110 1111 1000 0011 0000) is incorrectly interpreted as 2681141296 seconds since the Unix epoch, which is
+12/17/2054 @ 5:28pm.
+- Since directories under /tmp use the local filesystem, the same binary representation of the timestamp is correctly interpreted as -1613826000 seconds before the Unix epoch there, which is
+11/11/1918 @ 11:00am.
 
 
