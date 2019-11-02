@@ -86,3 +86,11 @@ cat /proc/self/status | ./sfrob > out
 test $? -eq 0 || echo "Test $test: wrong exit code"
 #printf '     ' > expected_output
 #cmp expected_output out > /dev/null || echo "Test $test: wrong STDOUT"
+
+# Note: did not fully test this.
+##### Test 11: test memory allocation error by throwing a ton of bytes into STDIN.
+#test=11
+#cat /dev/urandom | head -c 30000000000 | ./sfrob > out.1 2> out.2
+#test $? -eq 1 || echo "Test $test: wrong exit code"
+#cmp -s out.2 /dev/null && echo "Test $test: STDERR empty"
+#cmp out.1 /dev/null || echo "Test $test: STDOUT not empty"

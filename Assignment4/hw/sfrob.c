@@ -145,12 +145,12 @@ int main()
 	  if (wordlist == NULL)
 	  {
 	      wordlist = (char**) malloc(sizeof(char*));
-	      check_mem_alloc_error(word, wordlist, wordlist_len);
+	      check_mem_alloc_error(wordlist, wordlist, wordlist_len);
 	  }
 	  else
 	  {
 	      wordlist = (char**) realloc(wordlist, (wordlist_len + 1) * sizeof(char*));
-	      check_mem_alloc_error(word, wordlist, wordlist_len);
+	      check_mem_alloc_error(wordlist, wordlist, wordlist_len);
 	  }
           wordlist[wordlist_len] = word;
 	  wordlist_len++;
@@ -168,12 +168,12 @@ int main()
       if (wordlist == NULL)
       {
 	  wordlist = (char**) malloc(sizeof(char*));
-	  check_mem_alloc_error(word, wordlist, wordlist_len);
+	  check_mem_alloc_error(wordlist, wordlist, wordlist_len);
       }
       else
       {
 	  wordlist = (char**) realloc(wordlist, (wordlist_len + 1) * sizeof(char*));
-	  check_mem_alloc_error(word, wordlist, wordlist_len);
+	  check_mem_alloc_error(wordlist, wordlist, wordlist_len);
       }
       wordlist[wordlist_len] = word;
       wordlist_len++;
