@@ -4,7 +4,7 @@ option=$1
 
 # Using default C version per Piazza: https://piazza.com/class/k0zogkkf73r5dj?cid=268
 # __STDC_VERSION__ is 201710 (c17, a bugfix version of c11)
-gcc -g -O0 sfrob.c -o sfrob
+gcc sfrob.c -o sfrob
 
 ##### Test 1: Test case given in spec.
 test=1
