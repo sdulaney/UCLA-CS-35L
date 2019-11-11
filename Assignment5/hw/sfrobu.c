@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <assert.h>
 
@@ -56,25 +56,13 @@ void free_memory(char** wordlist, int wordlist_len)
     free(wordlist);
 }
 
-void check_output_error(int ret_code, char** wordlist, int wordlist_len)
-{
-    if (ret_code == EOF)
-    {
-	if (ferror(stdout)) 
-        {
-	    free_memory(wordlist, wordlist_len);
-	    fprintf(stderr, "Output error.\n");
-	    exit(1);
-        }
-    }
-}
-
 void check_mem_alloc_error(void* ptr, char** wordlist, int wordlist_len)
 {
     if (ptr == NULL)
     {
 	free_memory(wordlist, wordlist_len);
-        fprintf(stderr, "Memory allocation error.\n");
+	char msg[] = "Memory allocation error.\n";
+	write(2, msg, sizeof(msg));
         exit(1);
     }
 }
@@ -111,22 +99,21 @@ int main()
   int ch;
   while (1)
   {
-      ch = getchar();
+      int temp = read(0, &ch, 1);
 
-      // If getchar failed due to an error besides end-of-file condition
-      if (ferror(stdin))
+      if (temp == -1)
       {
 	  free_memory(wordlist, wordlist_len);
-	  fprintf(stderr, "Input error.\n");
+	  char msg[] = "Input error.\n";
+	  write(2, msg, sizeof(msg));
 	  exit(1);
       }
       
-      // If getchar failed due to end-of-file condition
-      if (feof(stdin))
+      if (temp == 0)
       {
 	  break;
       }
-
+      
       if (word == NULL)
       {
 	  word = (char*) malloc(sizeof(char));
@@ -185,14 +172,12 @@ int main()
 
   for (int i = 0; i < wordlist_len; i++)
   {
-      int putchar_ret_code = 0;
       for (int j = 0; wordlist[i][j] != ' '; j++)
       {
-	  putchar_ret_code = putchar(wordlist[i][j]);
-	  check_output_error(putchar_ret_code, wordlist, wordlist_len);
+	  write(1, &wordlist[i][j], 1);
       }
-      putchar_ret_code = putchar(' ');
-      check_output_error(putchar_ret_code, wordlist, wordlist_len);
+      char temp[] = " ";
+      write(1, &temp, 1);
   }
 
   free_memory(wordlist, wordlist_len); 
