@@ -3,10 +3,289 @@ Laboratory: Buffered versus unbuffered I/O
 NOTE: Per the spec, this is a log of what I did in the lab so that I can reproduce the results later and I've briefly noted down what I did and what happened. Trivial commands may or may not be
 explained.
 
-1.
+########## Question 1. Write a C transliteration program tr2b.c that uses getchar and putchar to transliterate bytes as described above.
 
-2.
+The general approach to my implementation of tr2b.c can be described as follows:
+- I wrote a function check_args to validate that per the spec the program is passed exactly two arguments of equal length, and that the argument from does not contain duplicate bytes.
+- I used the function strlen (string.h) to get the length of strings.
+- I also included a function check_output_error from my sfrob.c implementation to check for output errors.
+- Whenever I encounter an error condition I both diagnose it on STDERR using the library function fprintf (stdio.h) and exit (stdlib.h) with an exit code of 1.
+- I then read from STDIN byte by byte with the same loop and error/stopping conditions as my sfrob.c implementation, using getchar (stdio.h).
+- If the character read in is contained in the argument from, I output the corresponding character in the argument to to STDOUT using putchar (stdio.h).
+- Otherwise, I output the original character that was read in to STDOUT using putchar (stdio.h).
+- I used the type bool (stdbool.h) to indicate when a match was found in the argument from.
 
-3.
+########## Question 2. Write a C program tr2u.c that uses read and write to transliterate bytes, instead of using getchar and putchar. The nbyte arguments to read and write should be 1, so that the program reads and writes single bytes at a time.
 
-4.
+The general approach of my implementation of tr2u.c is the same as tr2b.c except that it uses system calls for input and output instead of library functions:
+- Instead of using fprintf to diagnose errors on STDERR, write (unistd.h) is used. 
+- The first argument in this case is the file descriptor 2 for STDERR and the next two arguments indicate we want to write all bytes in the buffer (the whole error message).
+- Instead of using getchar to read in bytes, read (unistd.h) is used.
+- The first argument in this case is the file descriptor 0 for STDIN and the next two arguments indicate we want to read in a single byte at a time.
+- Instead of using putchar for output, write (unistd.h) is also used.
+- The first argument in this case is the file descriptor 1 for STDOUT and the next two arguments indicate we want to write a single byte at a time.
+
+########## test-tr2.sh: Shell script used to test tr2b.c and tr2u.c
+
+#!/bin/sh
+
+# Using c11 per Piazza: https://piazza.com/class/k0zogkkf73r5dj?cid=310
+gcc -std=c11 tr2b.c -o tr2b
+
+##### Test 1: Test case given on Piazza.
+test=1
+echo 'ab\[-c' | ./tr2b 'a\[-' 'ptsd' > out
+test $? -eq 0 || echo "Test $test: wrong exit code"
+echo 'pbtsdc' > expected_output
+cmp expected_output out > /dev/null || echo "Test $test: wrong STDOUT"
+
+##### Test 2: Valid input.
+test=2
+echo '12321' | ./tr2b '12' 'ab' > out
+test $? -eq 0 || echo "Test $test: wrong exit code"
+echo 'ab3ba' > expected_output
+cmp expected_output out > /dev/null || echo "Test $test: wrong STDOUT"
+
+##### Test 3: Empty strings.
+test=3
+echo '12321' | ./tr2b '' '' > out
+test $? -eq 0 || echo "Test $test: wrong exit code"
+echo '12321' > expected_output
+cmp expected_output out > /dev/null || echo "Test $test: wrong STDOUT"
+
+##### Test 4: from and to are not the same length (to longer).
+test=4
+echo '12321' | ./tr2b '12' 'abc' > out.1 2> out.2
+test $? -eq 1 || echo "Test $test: wrong exit code"
+cmp -s out.2 /dev/null && echo "Test $test: STDERR empty"
+cmp out.1 /dev/null || echo "Test $test: STDOUT not empty"
+
+##### Test 5: from and to are not the same length (from longer).
+test=5
+echo '12321' | ./tr2b '123' 'ab' > out.1 2> out.2
+test $? -eq 1 || echo "Test $test: wrong exit code"
+cmp -s out.2 /dev/null && echo "Test $test: STDERR empty"
+cmp out.1 /dev/null || echo "Test $test: STDOUT not empty"
+
+##### Test 6: from has duplicate bytes.
+test=6
+echo '12321' | ./tr2b '212' 'abc' > out.1 2> out.2
+test $? -eq 1 || echo "Test $test: wrong exit code"
+cmp -s out.2 /dev/null && echo "Test $test: STDERR empty"
+cmp out.1 /dev/null || echo "Test $test: STDOUT not empty"
+
+##### Test 7: wrong number of operands (too few).
+test=7
+echo '12321' | ./tr2b '212' > out.1 2> out.2
+test $? -eq 1 || echo "Test $test: wrong exit code"
+cmp -s out.2 /dev/null && echo "Test $test: STDERR empty"
+cmp out.1 /dev/null || echo "Test $test: STDOUT not empty"
+
+##### Test 8: wrong number of operands (too many).
+test=8
+echo '12321' | ./tr2b '212' 'abc' 'def' > out.1 2> out.2
+test $? -eq 1 || echo "Test $test: wrong exit code"
+cmp -s out.2 /dev/null && echo "Test $test: STDERR empty"
+cmp out.1 /dev/null || echo "Test $test: STDOUT not empty"
+
+######################################################################
+
+# Using c11 per Piazza: https://piazza.com/class/k0zogkkf73r5dj?cid=310
+gcc -std=c11 tr2u.c -o tr2u
+
+##### Test 1: Test case given on Piazza.
+test=1
+echo 'ab\[-c' | ./tr2u 'a\[-' 'ptsd' > out
+test $? -eq 0 || echo "Test $test: wrong exit code"
+echo 'pbtsdc' > expected_output
+cmp expected_output out > /dev/null || echo "Test $test: wrong STDOUT"
+
+##### Test 2: Valid input.
+test=2
+echo '12321' | ./tr2u '12' 'ab' > out
+test $? -eq 0 || echo "Test $test: wrong exit code"
+echo 'ab3ba' > expected_output
+cmp expected_output out > /dev/null || echo "Test $test: wrong STDOUT"
+
+##### Test 3: Empty strings.
+test=3
+echo '12321' | ./tr2u '' '' > out
+test $? -eq 0 || echo "Test $test: wrong exit code"
+echo '12321' > expected_output
+cmp expected_output out > /dev/null || echo "Test $test: wrong STDOUT"
+
+##### Test 4: from and to are not the same length (to longer).
+test=4
+echo '12321' | ./tr2u '12' 'abc' > out.1 2> out.2
+test $? -eq 1 || echo "Test $test: wrong exit code"
+cmp -s out.2 /dev/null && echo "Test $test: STDERR empty"
+cmp out.1 /dev/null || echo "Test $test: STDOUT not empty"
+
+##### Test 5: from and to are not the same length (from longer).
+test=5
+echo '12321' | ./tr2u '123' 'ab' > out.1 2> out.2
+test $? -eq 1 || echo "Test $test: wrong exit code"
+cmp -s out.2 /dev/null && echo "Test $test: STDERR empty"
+cmp out.1 /dev/null || echo "Test $test: STDOUT not empty"
+
+##### Test 6: from has duplicate bytes.
+test=6
+echo '12321' | ./tr2u '212' 'abc' > out.1 2> out.2
+test $? -eq 1 || echo "Test $test: wrong exit code"
+cmp -s out.2 /dev/null && echo "Test $test: STDERR empty"
+cmp out.1 /dev/null || echo "Test $test: STDOUT not empty"
+
+##### Test 7: wrong number of operands (too few).
+test=7
+echo '12321' | ./tr2u '212' > out.1 2> out.2
+test $? -eq 1 || echo "Test $test: wrong exit code"
+cmp -s out.2 /dev/null && echo "Test $test: STDERR empty"
+cmp out.1 /dev/null || echo "Test $test: STDOUT not empty"
+
+##### Test 8: wrong number of operands (too many).
+test=8
+echo '12321' | ./tr2u '212' 'abc' 'def' > out.1 2> out.2
+test $? -eq 1 || echo "Test $test: wrong exit code"
+cmp -s out.2 /dev/null && echo "Test $test: STDERR empty"
+cmp out.1 /dev/null || echo "Test $test: STDOUT not empty"
+
+########## Question 3. Use the strace command to compare the system calls issued by your tr2b and tr2u commands (a) when copying one file to another, and (b) when copying a file to your terminal. Use a file that contains at least 5,000,000 bytes.
+
+NOTE: only the summary output of strace is shown.
+
+# Create a file of size 5,000,000 bytes
+head --bytes=5000000 /dev/urandom > bigfile.txt
+
+(a) when copying one file to another
+
+##### tr2b
+
+strace -c ./tr2b 'AB' 'XY' < bigfile.txt > output.txt
+
+% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ----------------
+100.00    0.000023          23         1           munmap
+  0.00    0.000000           0        79           read
+  0.00    0.000000           0        77           write
+  0.00    0.000000           0         2           open
+  0.00    0.000000           0         2           close
+  0.00    0.000000           0         4           fstat
+  0.00    0.000000           0        10           mmap
+  0.00    0.000000           0         3           mprotect
+  0.00    0.000000           0         1           brk
+  0.00    0.000000           0         1         1 access
+  0.00    0.000000           0         1           execve
+  0.00    0.000000           0         1           arch_prctl
+------ ----------- ----------- --------- --------- ----------------
+100.00    0.000023                   182         1 total
+
+##### tr2u
+
+strace -c ./tr2u 'AB' 'XY' < bigfile.txt > output.txt
+
+% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ----------------
+ 56.31    0.618274           0   5000000           write
+ 43.69    0.479673           0   5000002           read
+  0.00    0.000000           0         2           open
+  0.00    0.000000           0         2           close
+  0.00    0.000000           0         2           fstat
+  0.00    0.000000           0         8           mmap
+  0.00    0.000000           0         3           mprotect
+  0.00    0.000000           0         1           munmap
+  0.00    0.000000           0         1           brk
+  0.00    0.000000           0         1         1 access
+  0.00    0.000000           0         1           execve
+  0.00    0.000000           0         1           arch_prctl
+------ ----------- ----------- --------- --------- ----------------
+100.00    1.097947              10000024         1 total
+
+- From the summary output of strace, we can see that tr2b has a much smaller amount of system calls (about 75 read/write system calls) than tr2u (about 5000000 read/write system calls), as expected.
+- tr2b has fewer system calls because it uses the C library functions getchar, putchar, and fprintf for input and output. These functions perform buffered I/O which means they collect as many bytes as possible (in a buffer) and read more than a single byte (into buffer) at a time and use one system call for a block of bytes. This buffered I/O decreases the number of read/write system calls and the corresponding overhead.
+- On the other hand, tr2u uses read and write for input and output. This is unbuffered I/O because every byte is read/written by the kernel through a system call. The larger number of system calls can be observed in the seconds column of the output, where tr2u has a much higher value for CPU time spent running in the kernel than tr2b. tr2u also runs much slower than tr2b because each of the 5000000 system calls adds overhead due to the actions the OS must take to perform a system call (process interrupted, state saved, switching CPU from user to kernel mode and back, etc).
+
+(b) when copying a file to your terminal
+
+##### tr2b
+
+strace -c ./tr2b 'AB' 'XY' < bigfile.txt
+
+% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ----------------
+100.00    0.002165           0     19971           write
+  0.00    0.000000           0        79           read
+  0.00    0.000000           0         2           open
+  0.00    0.000000           0         2           close
+  0.00    0.000000           0         4           fstat
+  0.00    0.000000           0        10           mmap
+  0.00    0.000000           0         3           mprotect
+  0.00    0.000000           0         1           munmap
+  0.00    0.000000           0         1           brk
+  0.00    0.000000           0         1         1 access
+  0.00    0.000000           0         1           execve
+  0.00    0.000000           0         1           arch_prctl
+------ ----------- ----------- --------- --------- ----------------
+100.00    0.002165                 20076         1 total
+
+##### tr2u
+
+strace -c ./tr2u 'AB' 'XY' < bigfile.txt
+
+% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ----------------
+ 56.32    0.603225           0   5000000           write
+ 43.68    0.467934           0   5000002           read
+  0.00    0.000000           0         2           open
+  0.00    0.000000           0         2           close
+  0.00    0.000000           0         2           fstat
+  0.00    0.000000           0         8           mmap
+  0.00    0.000000           0         3           mprotect
+  0.00    0.000000           0         1           munmap
+  0.00    0.000000           0         1           brk
+  0.00    0.000000           0         1         1 access
+  0.00    0.000000           0         1           execve
+  0.00    0.000000           0         1           arch_prctl
+------ ----------- ----------- --------- --------- ----------------
+100.00    1.071159              10000024         1 total
+
+- From the summary output of strace, we can see that the buffered version tr2b again has a much smaller amount of system calls (79 read and 19971 write system calls) than the unbuffered version tr2u (about 5000000 read/write system calls), as expected.
+- For tr2b (the buffered version), we can see that copying a file to your terminal uses a much larger amount of write system calls than when copying one file to another in part (a). This could be due to a smaller buffer being used by putchar because the terminal is waiting for output to display.
+
+########## Question 4. Use the time command to measure how much faster one program is, compared to the other, when copying the same amount of data.
+
+Note: the same amount of data is used for each measurement, namely, the 5,000,000 byte file bigfile.txt from Question 3 is copied in each case.
+
+(a) when copying one file to another
+
+##### tr2b
+
+time ./tr2b 'AB' 'XY' < bigfile.txt > output.txt
+
+real 0m0.308s
+user 0m0.243s
+sys  0m0.011s
+
+##### tr2u
+
+time ./tr2u 'AB' 'XY' < bigfile.txt > output.txt
+
+real 0m8.593s
+user 0m1.339s
+sys  0m7.208s
+
+(b) when copying a file to your terminal
+
+##### tr2b
+
+real  0m7.239s
+user  0m0.490s
+sys   0m0.119s
+
+##### tr2u
+
+real  0m8.555s
+user  0m1.176s
+sys   0m7.371s
+
+- From the output of time, we can see that tr2u has a higher value for sys (the CPU time used by the system on behalf of the process in syscalls) and hence real (elapsed time as read from a wall clock) than tr2b in both cases (a) and (b), as expected, due to the higher number of system calls and associated overhead.
+- We can also observe that tr2b has a higher value of sys when copying a file to the terminal than when just copying one file to another, which is consistent with my observations using strace and results in tr2b running slower in case (b) than case (a) (higher value of real due to associated overhead).
