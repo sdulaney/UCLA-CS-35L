@@ -1,0 +1,12 @@
+Laboratory: Buffered versus unbuffered I/O
+
+NOTE: Per the spec, this is a log of what I did in the lab so that I can reproduce the results later and I've briefly noted down what I did and what happened. Trivial commands may or may not be
+explained.
+
+1.
+
+2.
+
+3.
+
+4.
