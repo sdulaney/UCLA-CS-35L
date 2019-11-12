@@ -1,7 +1,7 @@
                                                 (running)
-Tgid:	17569
-Pid:	17569
-PPid:	17536
+Tgid:	29342
+Pid:	29342
+PPid:	29309
 TracerPid:	0
 Uid:	13037	13037	13037	13037
 Gid:	130	130	130	130
@@ -36,6 +36,6 @@ Cpus_allowed_list:	0-31
 Mems_allowed:	00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000003
 Mems_allowed_list:	0-1
 voluntary_ctxt_switches:	1
-nonvoluntary_ctxt_switches:	2
+nonvoluntary_ctxt_switches:	1
  Name:	cat
 State:	R 
