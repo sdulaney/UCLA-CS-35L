@@ -313,3 +313,36 @@ lines (say zero, 100, 10,000, and a million lines), and estimate the CPU time co
 ########## Question 2. Also, suppose the assignment were changed so that the rewritten program also had to use system calls rather than <stdlib.h> memory allocation functions such as malloc, realloc,
 free. Which system calls would the program use, and what would the calls' arguments look like?
 
+If the program had to use system calls rather than the memory allocation functions malloc, realloc, and free, it would use the following:
+
+malloc often uses the following syscalls to allocate memory:
+
+- mmap: creates a new mapping in the virtual address space of the calling process
+** arguments: void *addr, size_t length, int prot, int flags, int fd, off_t offset
+** notes: addr is the starting address of the new mapping, length is the length of the mapping, prot is the desired memory protection, flags determine whether updates to the mapping are visible to
+other processes mapping the same region, fd is the file descriptor, and offset is the offset in bytes in the file
+
+brk() and sbrk() change the location of the program break, which defines the end of the process's data segment.
+
+- brk: change data segment size
+** arguments: void *addr
+** notes: sets the end of the data segment to the value specified by addr
+
+- sbrk: change data segment size
+** arguments: intptr_t increment
+** notes: increments the program's data space by increment bytes
+
+realloc often uses the following syscalls to allocate memory:
+
+- mremap: remap a virtual memory address
+** arguments: void *old_address, size_t old_size, size_t new_size, int flags, void *new_address
+** notes: old_address is the old address of the virtual memory block that you want to expand (or shrink), old_size is the old size of the virtual memory block, new_size is the requested size of the
+virtual memory block after the resize, new_address specifies a page-aligned address to which the mapping must be moved
+
+free often uses the following syscalls to free memory:
+
+- munmap: unmap files or devices into memory
+** arguments: void *addr, size_t length
+** notes: deletes the mappings for the specified address range (from addr for length bytes), and causes further references to addresses within the range to generate invalid memory references
+
+Note that the exact syscalls used may vary by C implementation of the standard library functions, or for large and small allocations.
