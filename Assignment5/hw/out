@@ -1,2 +1,41 @@
-Name:	cat
+                                                (running)
+Tgid:	24704
+Pid:	24704
+PPid:	24671
+TracerPid:	0
+Uid:	13037	13037	13037	13037
+Gid:	130	130	130	130
+Utrace:	0
+FDSize:	256
+Groups:	130 84 308 36 0 0 1144 1708 4232 4232 52 500 500 
+VmPeak:	 kB
+VmHWM:	 kB
+VmLib:	 kB
+VmLck:	 kB
+VmData:	 kB
+VmExe:	 kB
+VmRSS:	 kB
+VmSize:	 kB
+VmSwap:	 kB
+VmStk:	 kB
+VmPTE:	 kB
+Threads:	1
+SigQ:	0/128266
+SigPnd:	0000000000000000
+ShdPnd:	0000000000000000
+SigBlk:	0000000000000000
+SigIgn:	0000000000000000
+SigCgt:	0000000000000000
+CapInh:	0000000000000000
+CapPrm:	0000000000000000
+CapEff:	0000000000000000
+CapBnd:	ffffffffffffffff
+Speculation_Store_Bypass:	vulnerable
+Cpus_allowed:	ffffffff
+Cpus_allowed_list:	0-31
+Mems_allowed:	00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000003
+Mems_allowed_list:	0-1
+voluntary_ctxt_switches:	1
+nonvoluntary_ctxt_switches:	2
+ Name:	cat
 State:	R 

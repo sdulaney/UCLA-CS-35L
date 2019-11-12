@@ -1,8 +1,5 @@
 #include <unistd.h>
 #include <stdlib.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <stdbool.h>
 
 // Returns a value that is negative, zero, or positive depending on whether a is less than, equal to, or greater than b.
 int frobcmp(char const * a, char const * b)
@@ -77,76 +74,6 @@ int main()
     char* word = NULL;
     int word_len = 0;
 
-    struct stat fileS;
-    int input_size = 0;
-    int num_words = 0;
-    if (fstat(0, &fileS) < 0)
-    {
-	char msg[] = "Unable to read file info.\n";
-	write(2, &msg, sizeof(msg));
-	exit(1);
-    }
-
-    if (S_ISREG(fileS.st_mode))
-    {
-	// Handle empty files.
-	if (fileS.st_size == 0)
-	{
-	    return 0;
-	}
-
-	word = (char*) malloc(fileS.st_size * sizeof(char));
-	//check_mem_alloc_error(word, wordlist, wordlist_len);
-	input_size = fileS.st_size;
-
-	int temp = read(0, word, input_size);
-	if (temp == -1)
-	{
-	    free(word);
-	    char msg[] = "Input error.\n";
-	    write(2, &msg, sizeof(msg));
-	    exit(1);
-	}
-
-	// Append trailing space if missing.
-	if (word[input_size - 1] != ' ')
-	{
-	    word = (char*) realloc(word, (input_size + 1) * sizeof(char));
-	    //  check_mem_alloc_error(word, wordlist, wordlist_len);
-	    input_size += 1;
-	    word[input_size - 1] = ' ';
-	}
-
-	// Count number of spaces so we can allocate wordlist with enough memory to hold pointers to all the words in the file.
-	for (int i = 0; i < input_size; i++)
-	{
-	    if (word[i] == ' ')
-	    {
-		num_words++;
-	    }
-	}
-
-	wordlist = (char**) malloc(num_words * sizeof(char*));
-	//check_mem_alloc_error(wordlist, wordlist, wordlist_len);
-	wordlist_len = num_words;
-
-	int j = 0;
-	bool finishing_word = false;
-	for (int i = 0; i < input_size; i++)
-	{
-	    if (!finishing_word)
-	    {
-		wordlist[j++] = &word[i];
-		finishing_word = true;
-	    }
-	    if (word[i] == ' ')
-	    {
-		finishing_word = false;
-	    }
-        }
-    }
-
-    else {
     // Read from STDIN byte by byte.
     int ch;
     while (1)
@@ -218,7 +145,6 @@ int main()
 	wordlist_len++;
 	word = NULL;
 	word_len = 0;
-    }
     }
 
     qsort(wordlist, wordlist_len, sizeof(char*), cmp);
