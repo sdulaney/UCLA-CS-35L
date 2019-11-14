@@ -1,4 +1,5 @@
-#include <randcpuid.h>
+#include "randcpuid.h"
+#include <cpuid.h>
 
 /* Description of the current CPU.  */
 struct cpuid { unsigned eax, ebx, ecx, edx; };

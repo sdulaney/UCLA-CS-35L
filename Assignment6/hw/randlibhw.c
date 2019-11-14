@@ -1,4 +1,5 @@
 #include <randlib.h>
+#include <immintrin.h>
 
 /* Hardware implementation.  */
 
@@ -27,8 +28,5 @@ hardware_rand64_fini (void)
 extern unsigned long long
 rand64 (void)
 {
-    hardware_rand64_init();
-    unsigned long long int x = hardware_rand64();
-    hardware_rand64_fini();
-    return x;
+    return (hardware_rand64());
 }

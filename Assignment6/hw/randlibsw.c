@@ -1,4 +1,6 @@
 #include <randlib.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 /* Software implementation.  */
 
@@ -7,8 +9,8 @@ static FILE *urandstream;
 
 /* Initialize the software rand64 implementation.  */
 static void
-software_rand64_init (void)
 __attribute__ ((constructor))
+software_rand64_init (void)
 {
   urandstream = fopen ("/dev/urandom", "r");
   if (! urandstream)
@@ -27,8 +29,8 @@ software_rand64 (void)
 
 /* Finalize the software rand64 implementation.  */
 static void
-software_rand64_fini (void)
 __attribute__ ((destructor))
+software_rand64_fini (void)
 {
   fclose (urandstream);
 }
@@ -36,5 +38,5 @@ __attribute__ ((destructor))
 extern unsigned long long
 rand64 (void)
 {
-    
+    return (software_rand64());
 }

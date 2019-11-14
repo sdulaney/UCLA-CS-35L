@@ -1,4 +1,8 @@
-#include <randcpuid.h>
+#include "randcpuid.h"
+#include <stdbool.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 static bool
 writebytes (unsigned long long x, int nbytes)
@@ -45,23 +49,43 @@ main (int argc, char **argv)
 
   /* Now that we know we have work to do, arrange to use the
      appropriate library.  */
-  void (*initialize) (void);
+  void* handle;
   unsigned long long (*rand64) (void);
-  void (*finalize) (void);
+  char* error;
+
   if (rdrand_supported ())
     {
-      initialize = hardware_rand64_init;
-      rand64 = hardware_rand64;
-      finalize = hardware_rand64_fini;
+	handle = dlopen("randlibhw.so", RTLD_NOW);
+	if (!handle)
+	{
+	    fprintf(stderr, "Error: dlopen failed with error %s.\n", dlerror());
+	    exit(1);
+	}
+	rand64 = dlsym(handle, "rand64");
+	error = dlerror();
+	if (error != NULL)
+	{
+	    fprintf(stderr, "Error: dlsym failed with error %s.\n", error);
+	    exit(1);
+	}
     }
   else
     {
-      initialize = software_rand64_init;
-      rand64 = software_rand64;
-      finalize = software_rand64_fini;
+	handle = dlopen("randlibsw.so", RTLD_NOW);
+	if (!handle)
+	{
+	    fprintf(stderr, "Error: dlopen failed with error %s.\n", dlerror());
+	    exit(1);
+	}
+	rand64 = dlsym(handle, "rand64");
+	error = dlerror();
+	if (error != NULL)
+	{
+	    fprintf(stderr, "Error: dlsym failed with error %s.\n", error);
+	    exit(1);
+	}
     }
 
-  initialize ();
   int wordsize = sizeof rand64 ();
   int output_errno = 0;
 
@@ -85,10 +109,15 @@ main (int argc, char **argv)
     {
       errno = output_errno;
       perror ("output");
-      finalize ();
       return 1;
     }
 
-  finalize ();
+  int dlclose_ret_code = dlclose(handle);
+  if (dlclose_ret_code != 0)
+  {
+      fprintf(stderr, "Error: dlclose failed with error code %d.\n", dlclose_ret_code);
+      exit(1);
+  }
+
   return 0;
 }
