@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <dlfcn.h>
 
 static bool
 writebytes (unsigned long long x, int nbytes)
