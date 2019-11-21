@@ -1,0 +1,283 @@
+Homework: Verifying and publishing a backported change
+
+NOTE: Per the spec, this is a log of what I did in the homework so that I can reproduce the results later and I've briefly noted down what I did and what happened. Trivial commands may or may not be
+explained.
+
+1. Maintain a file hw7.txt that logs the actions you do in solving the homework. This is like your lab notebook lab9.txt, except it’s for the homework instead of the lab.
+
+emacs hw7.txt
+
+2. Check out version 3.0 of Diffutils from your repository, into a new branch named “quote”.
+
+git clone https://git.savannah.gnu.org/git/diffutils.git
+cd diffutils/
+git checkout v3.0 -b quote
+
+3. Install your change into this new branch, by running the patch command with your patch quote-3.0-patch.txt as input.
+
+patch -p1 < ../../lab/diffutils-3.0-patch-full-backup/quote-3.0-patch.txt
+
+Output of previous command:
+patching file src/cmp.c
+patching file src/diff.c
+patching file src/diff3.c
+patching file src/dir.c
+patching file src/sdiff.c
+patching file src/util.c
+
+4. Learn how to use the Emacs function add-change-log-entry-other-window (C-x 4 a).
+
+I read the documentation at https://www.gnu.org/software/emacs/manual/html_node/emacs/Change-Log-Commands.html.
+
+5. Use this Emacs function to compose an appropriate ChangeLog entry for your patch, by adapting the change log from the original patch.
+
+emacs ../../lab/diffutils-3.0-patch-full-backup/quote-3.0-patch.txt
+C-x 4 a
+# Type adapted change log entry from the original patch in quote-patch.txt, shown below:
+
+2019-11-20  Stewart P Dulaney  <stewart@lnxsrv05.seas.ucla.edu>
+
+        * quote-3.0-patch.txt: [PATCH] maint: quote 'like this' or "like this", not `like this'
+        This is in response to a recent change in the GNU coding standards,
+	which now suggest quoting 'like this' or "like this", instead of
+	`like this' or ``like this''.
+        * src/cmp.c (try_help, specify_ignore_initial, usage, main):
+	* src/diff.c (main, try_help, option_help_msgid, specify_value)
+	(compare_files):
+	* src/diff3.c (main, try_help, option_help_msgid, usage)
+        (read_diff):
+	* src/dir.c (compare_names):
+	* src/sdiff.c (try_help, usage, check_child_status, main):
+	* src/util.c (finish_output):
+        Quote 'like this' in output.
+
+6. Commit your changes to the new branch, using the ChangeLog entry as the commit message.
+
+git add .
+git commit -F ../../lab/diffutils-3.0-patch-full-backup/ChangeLog
+
+Output of previous command:
+[quote 80b90a1] 2019-11-20  Stewart P Dulaney  <stewart@lnxsrv05.seas.ucla.edu>
+ Committer: Stewart P Dulaney <stewart@lnxsrv05.seas.ucla.edu>
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly:
+
+    git config --global user.name "Your Name"
+    git config --global user.email you@example.com
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 6 files changed, 45 insertions(+), 45 deletions(-)
+
+7. Use the command “git format-patch” to generate a file formatted-patch.txt. This patch should work without having to fix things by hand afterwards.
+
+# Generate file formatted-patch.txt
+
+git log
+# Copy commit hash 80b90a18d8ffa886bb083d5c3efe3fd3be5f7dd9.
+q
+git format-patch -1 80b90a18d8ffa886bb083d5c3efe3fd3be5f7dd9 --stdout > formatted-patch.txt
+
+# Test the patch works without having to fix things by hand afterwards
+
+mkdir diffutils-3.0-patch-test-mine
+cd diffutils-3.0-patch-test-mine/
+git clone https://git.savannah.gnu.org/git/diffutils.git
+cd diffutils/
+git checkout v3.0 -b mine
+git am ../../diffutils/formatted-patch.txt
+
+Output of previous command:
+Applying: 2019-11-20 Stewart P Dulaney <stewart@lnxsrv05.seas.ucla.edu>
+
+git log
+
+# Running git log confirms the patch was successfully applied, and no fixes by hand are needed
+
+8. Your teaching assistant will assign you a partner, who will also generate a patch. Verify that your partner's patch works, by checking out version 3.0 again into a new temporary branch partner,
+applying the patch with the command “git am”, and building the resulting system, checking that it works with “make check”.
+
+Partner: Pariya Samandi
+UID: 205-092-357
+
+mkdir diffutils-3.0-patch-test-pariya
+cd diffutils-3.0-patch-test-pariya/
+git clone https://git.savannah.gnu.org/git/diffutils.git
+cd diffutils/
+git checkout v3.0 -b partner
+# Run scp formatted-patch.txt stewart@lnxsrv07.seas.ucla.edu:/u/cs/ugrad/stewart/Assignment7/hw/diffutils-3.0-patch-test-pariya/ from my laptop
+git am ../formatted-patch.txt
+
+Output of previous command:
+Applying: 2019-11-19 Pariya Samandi <pariya@lnxsrv06.seas.ucla.edu>
+/u/cs/ugrad/stewart/Assignment7/hw/diffutils-3.0-patch-test-pariya/diffutils/.git/rebase-apply/patch:50: trailing whitespace.
+													 * src/diff3.c:
+/u/cs/ugrad/stewart/Assignment7/hw/diffutils-3.0-patch-test-pariya/diffutils/.git/rebase-apply/patch:52: trailing whitespace.
+													 * src/cmp.c: Changing ` to ' in GNU Diffutils
+/u/cs/ugrad/stewart/Assignment7/hw/diffutils-3.0-patch-test-pariya/diffutils/.git/rebase-apply/patch:828: trailing whitespace.
+
+/u/cs/ugrad/stewart/Assignment7/hw/diffutils-3.0-patch-test-pariya/diffutils/.git/rebase-apply/patch:831: space before tab in indent.
+ 													   || (e == LONGINT_INVALID_SUFFIX_CHAR && **argptr == delimiter))
+/u/cs/ugrad/stewart/Assignment7/hw/diffutils-3.0-patch-test-pariya/diffutils/.git/rebase-apply/patch:839: space before tab in indent.
+ 													    _("SKIP values may be followed by the following multiplicative suffixes:\n\
+warning: squelched 87 whitespace errors
+warning: 92 lines add whitespace errors.
+
+git log
+
+# Note despite the errors from git am, running git log shows my partner's commit in the log.
+
+./bootstrap
+ldd --version	# 2.12, no additional patch needed (building on lnxsrv04)
+./configure
+make
+# Note that commands so far ran without error.
+make check
+
+Output of previous command:
+Making check in lib
+make[1]: Entering directory '/w/home.25/cs/ugrad/stewart/Assignment7/hw/diffutils-3.0-patch-test-pariya/diffutils/lib'
+make  check-recursive
+make[2]: Entering directory '/w/home.25/cs/ugrad/stewart/Assignment7/hw/diffutils-3.0-patch-test-pariya/diffutils/lib'
+make[3]: Entering directory '/w/home.25/cs/ugrad/stewart/Assignment7/hw/diffutils-3.0-patch-test-pariya/diffutils/lib'
+make[3]: Leaving directory '/w/home.25/cs/ugrad/stewart/Assignment7/hw/diffutils-3.0-patch-test-pariya/diffutils/lib'
+make[2]: Leaving directory '/w/home.25/cs/ugrad/stewart/Assignment7/hw/diffutils-3.0-patch-test-pariya/diffutils/lib'
+make[1]: Leaving directory '/w/home.25/cs/ugrad/stewart/Assignment7/hw/diffutils-3.0-patch-test-pariya/diffutils/lib'
+Making check in src
+make[1]: Entering directory '/w/home.25/cs/ugrad/stewart/Assignment7/hw/diffutils-3.0-patch-test-pariya/diffutils/src'
+make  check-am
+make[2]: Entering directory '/w/home.25/cs/ugrad/stewart/Assignment7/hw/diffutils-3.0-patch-test-pariya/diffutils/src'
+make[2]: Nothing to be done for 'check-am'.
+make[2]: Leaving directory '/w/home.25/cs/ugrad/stewart/Assignment7/hw/diffutils-3.0-patch-test-pariya/diffutils/src'
+make[1]: Leaving directory '/w/home.25/cs/ugrad/stewart/Assignment7/hw/diffutils-3.0-patch-test-pariya/diffutils/src'
+Making check in tests
+make[1]: Entering directory '/w/home.25/cs/ugrad/stewart/Assignment7/hw/diffutils-3.0-patch-test-pariya/diffutils/tests'
+make  check-TESTS
+make[2]: Entering directory '/w/home.25/cs/ugrad/stewart/Assignment7/hw/diffutils-3.0-patch-test-pariya/diffutils/tests'
+make[3]: Entering directory '/w/home.25/cs/ugrad/stewart/Assignment7/hw/diffutils-3.0-patch-test-pariya/diffutils/tests'
+/bin/sh: /bin/sh: cannot execute binary file
+Makefile:1309: recipe for target 'basic.log' failed
+make[3]: *** [basic.log] Error 126
+make[3]: Leaving directory '/w/home.25/cs/ugrad/stewart/Assignment7/hw/diffutils-3.0-patch-test-pariya/diffutils/tests'
+Makefile:1288: recipe for target 'check-TESTS' failed
+make[2]: *** [check-TESTS] Error 2
+make[2]: Leaving directory '/w/home.25/cs/ugrad/stewart/Assignment7/hw/diffutils-3.0-patch-test-pariya/diffutils/tests'
+Makefile:1403: recipe for target 'check-am' failed
+make[1]: *** [check-am] Error 2
+make[1]: Leaving directory '/w/home.25/cs/ugrad/stewart/Assignment7/hw/diffutils-3.0-patch-test-pariya/diffutils/tests'
+Makefile:1016: recipe for target 'check-recursive' failed
+make: *** [check-recursive] Error 1
+
+# Note that running "make check" with my patch yielded similar errors and the TA said on Piazza to record the errors and proceed.
+
+# We proceed to test if my partner's patched version of diff does the right thing in the same scenarios tested in Lab #13
+
+./src/diff . -
+
+Output of previous command:
+./src/diff: cannot compare '-' to a directory
+
+# In this case, diff does the right thing.
+
+./src/diff --help
+
+Output of previous command:
+Usage: ./src/diff [OPTION]... FILES
+Compare files line by line.
+
+  -i  --ignore-case  Ignore case differences in file contents.
+  --ignore-file-name-case  Ignore case when comparing file names.
+  --no-ignore-file-name-case  Consider case when comparing file names.
+  -E  --ignore-tab-expansion  Ignore changes due to tab expansion.
+  -b  --ignore-space-change  Ignore changes in the amount of white space.
+  -w  --ignore-all-space  Ignore all white space.
+  -B  --ignore-blank-lines  Ignore changes whose lines are all blank.
+  -I RE  --ignore-matching-lines=RE  Ignore changes whose lines all match RE.
+  --strip-trailing-cr  Strip trailing carriage return on input.
+  -a  --text  Treat all files as text.
+
+  -c  -C NUM  --context[=NUM]  Output NUM (default 3) lines of copied context.
+  -u  -U NUM  --unified[=NUM]  Output NUM (default 3) lines of unified context.
+    --label LABEL  Use LABEL instead of file name.
+    -p  --show-c-function  Show which C function each change is in.
+    -F RE  --show-function-line=RE  Show the most recent line matching RE.
+  -q  --brief  Output only whether files differ.
+  -e  --ed  Output an ed script.
+  --normal  Output a normal diff.
+  -n  --rcs  Output an RCS format diff.
+  -y  --side-by-side  Output in two columns.
+    -W NUM  --width=NUM  Output at most NUM (default 130) print columns.
+    --left-column  Output only the left column of common lines.
+    --suppress-common-lines  Do not output common lines.
+  -D NAME  --ifdef=NAME  Output merged file to show '#ifdef NAME' diffs.
+  --GTYPE-group-format=GFMT  Similar, but format GTYPE input groups with GFMT.
+  --line-format=LFMT  Similar, but format all input lines with LFMT.
+  --LTYPE-line-format=LFMT  Similar, but format LTYPE input lines with LFMT.
+    LTYPE is `old', `new', or 'unchanged'.  GTYPE is LTYPE or 'changed'.
+    GFMT may contain:
+      %<  lines from FILE1
+      %>  lines from FILE2
+      %=  lines common to FILE1 and FILE2
+      %[-][WIDTH][.[PREC]]{doxX}LETTER  printf-style spec for LETTER
+        LETTERs are as follows for new group, lower case for old group:
+          F  first line number
+          L  last line number
+          N  number of lines = L-F+1
+          E  F-1
+          M  L+1
+    LFMT may contain:
+      %L  contents of line
+      %l  contents of line, excluding any trailing newline
+      %[-][WIDTH][.[PREC]]{doxX}n  printf-style spec for input line number
+    Either GFMT or LFMT may contain:
+      %%  %
+      %c'C'  the single character C
+      %c'\OOO'  the character with octal code OOO
+
+  -l  --paginate  Pass the output through 'pr' to paginate it.
+  -t  --expand-tabs  Expand tabs to spaces in output.
+  -T  --initial-tab  Make tabs line up by prepending a tab.
+  --tabsize=NUM  Tab stops are every NUM (default 8) print columns.
+  --suppress-blank-empty  Suppress space or tab before empty output lines.
+
+  -r  --recursive  Recursively compare any subdirectories found.
+  -N  --new-file  Treat absent files as empty.
+  --unidirectional-new-file  Treat absent first files as empty.
+  -s  --report-identical-files  Report when two files are the same.
+  -x PAT  --exclude=PAT  Exclude files that match PAT.
+  -X FILE  --exclude-from=FILE  Exclude files that match any pattern in FILE.
+  -S FILE  --starting-file=FILE  Start with FILE when comparing directories.
+  --from-file=FILE1  Compare FILE1 to all operands.  FILE1 can be a directory.
+  --to-file=FILE2  Compare all operands to FILE2.  FILE2 can be a directory.
+
+  --horizon-lines=NUM  Keep NUM lines of the common prefix and suffix.
+  -d  --minimal  Try hard to find a smaller set of changes.
+  --speed-large-files  Assume large files and many scattered small changes.
+
+  -v  --version  Output version info.
+  --help  Output this help.
+
+FILES are 'FILE1 FILE2' or 'DIR1 DIR2' or 'DIR FILE...' or 'FILE... DIR'.
+If --from-file or --to-file is given, there are no restrictions on FILES.
+If a FILE is '-', read standard input.
+Exit status is 0 if inputs are the same, 1 if different, 2 if trouble.
+
+Report bugs to: bug-diffutils@gnu.org
+GNU diffutils home page: <http://www.gnu.org/software/diffutils/>
+General help using GNU software: <http://www.gnu.org/gethelp/>
+[stewart@lnxsrv04 ~/Assignment7/hw/diffutils-3.0-patch-test-pariya/diffutils]$ ./src/diff --help | grep '`'
+    LTYPE is `old', `new', or 'unchanged'.  GTYPE is LTYPE or 'changed'.
+
+# In this case, diff does the right thing except for on the line below, which contains some “`” that should be "'".
+
+    LTYPE is `old', `new', or 'unchanged'.  GTYPE is LTYPE or 'changed'.
+
+9. Verify that your ChangeLog entry works, by running the command “make distdir” and inspecting the resulting diffutils*/ChangeLog file.
+
+
+
+10. There is a copy of the GNU Emacs git repository's master branch on SEASnet in the directory ~eggert/src/gnu/emacs. Run the command gitk on it, and find the newest merge that is not newer than
+2015-01-25. Briefly describe (in hw9.txt) your view of the mergepoint, along with the roles of subwindows that you see.
