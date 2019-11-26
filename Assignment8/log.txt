@@ -1,0 +1,312 @@
+Laboratory: SSH setup and use in applications
+
+NOTE: Per the spec, this is a log of what I did in the lab so that I can reproduce the results later and I've briefly noted down what I did and what happened. Trivial commands may or may not be
+explained.
+
+# Partner: Pariya Samandi, UID: 205-092-357
+
+#################### Steps taken to configure my BeagleBone
+
+# First I completed the BeagleBone Setup Instructions listed here at home by myself: https://piazza.com/class/k0zogkkf73r5dj?cid=463
+
+# The following steps were done at YRL library while I was with my partner.
+
+##### Connect to UCLA_WEB
+
+sudo ssh root@192.168.7.2
+
+connmanctl
+
+Output of previous command:
+Error getting VPN connections: The name net.connman.vpn was not provided by any .service filesconnman
+
+connmanctl> enable wifi
+
+Output of previous command:
+Error wifi: Already enabled
+
+connmanctl> scan wifi
+
+Output of previous command:
+Scan completed for wifi
+
+connmanctl> services
+
+Output of previous command:
+    BeagleBone-90F1      wifi_2cf7f106911b_426561676c65426f6e652d39304631_managed_psk
+    SIL Network          wifi_2cf7f106911b_53494c204e6574776f726b_managed_psk
+                         wifi_2cf7f106911b_hidden_managed_psk
+    UCLA_WEB             wifi_2cf7f106911b_55434c415f574542_managed_none
+    UCLA_WIFI            wifi_2cf7f106911b_55434c415f57494649_managed_none
+    eduroam              wifi_2cf7f106911b_656475726f616d_managed_ieee8021x
+    ubnt-ucla-yrl        wifi_2cf7f106911b_75626e742d75636c612d79726c_managed_psk
+
+connmanctl> agent on
+
+Output of previous command:
+Agent registered
+
+connmanctl> connect wifi_2cf7f106911b_55434c415f574542_managed_none
+
+Output of previous command:
+Connected wifi_2cf7f106911b_55434c415f574542_managed_none
+
+connmanctl> quit
+
+##### Make sure you have openssh-server and openssh-client installed
+
+dpkg --get-selections | grep openssh
+
+Output of previous command:
+openssh-client					install
+openssh-server					install
+openssh-sftp-server				install
+
+##### Server Steps
+
+# Generate public and private keys
+ssh-keygen
+
+Output of previous command:
+Generating public/private rsa key pair.
+Enter file in which to save the key (/root/.ssh/id_rsa):
+Enter passphrase (empty for no passphrase):
+Enter same passphrase again:
+Your identification has been saved in /root/.ssh/id_rsa.
+Your public key has been saved in /root/.ssh/id_rsa.pub.
+The key fingerprint is:
+2e:e8:1a:b7:fc:2b:1a:fe:07:a8:86:d4:50:12:14:44 root@beaglebone
+The key's randomart image is:
++---[RSA 2048]----+
+|+Eo              |
+| . .             |
+|  o              |
+| .               |
+|  o.    S        |
+| ..... .         |
+|o.o o.. .        |
+|oo *....         |
+|. ++=+o.         |
++-----------------+
+
+# Create an account for the client on the server
+sudo useradd –d /home/pariya -m pariya
+
+Output of previous command:
+Usage: useradd [options] LOGIN
+       useradd -D
+       useradd -D [options]
+
+Options:
+  -b, --base-dir BASE_DIR       base directory for the home directory of the
+                                new account
+  -c, --comment COMMENT         GECOS field of the new account
+  -d, --home-dir HOME_DIR       home directory of the new account
+  -D, --defaults                print or change default useradd configuration
+  -e, --expiredate EXPIRE_DATE  expiration date of the new account
+  -f, --inactive INACTIVE       password inactivity period of the new account
+  -g, --gid GROUP               name or ID of the primary group of the new
+                                account
+  -G, --groups GROUPS           list of supplementary groups of the new
+                                account
+  -h, --help                    display this help message and exit
+  -k, --skel SKEL_DIR           use this alternative skeleton directory
+  -K, --key KEY=VALUE           override /etc/login.defs defaults
+  -l, --no-log-init             do not add the user to the lastlog and
+                                faillog databases
+  -m, --create-home             create the user's home directory
+  -M, --no-create-home          do not create the user's home directory
+  -N, --no-user-group           do not create a group with the same name as
+                                the user
+  -o, --non-unique              allow to create users with duplicate
+                                (non-unique) UID
+  -p, --password PASSWORD       encrypted password of the new account
+  -r, --system                  create a system account
+  -R, --root CHROOT_DIR         directory to chroot into
+  -s, --shell SHELL             login shell of the new account
+  -u, --uid UID                 user ID of the new account
+  -U, --user-group              create a group with the same name as the user
+  -Z, --selinux-user SEUSER     use a specific SEUSER for the SELinux user mapping
+
+sudo passwd pariya
+
+# This gave me an error about the user not existing which made me realize the useradd command wasn't executing properly (it displays the usage message - https://piazza.com/class/k0zogkkf73r5dj?cid=539).
+
+# We had to use a work around where we left off the option -d from useradd because useradd will create the home directory in the same (default) location without that argument.
+
+# Update: this may have been caused by copy/pasting the commands from the slides and getting some undesired characters.
+
+sudo useradd -m pariya
+
+sudo passwd pariya		# Typed password "rip".
+
+Output of previous command:
+Enter new UNIX password:
+Retype new UNIX password:
+passwd: password updated successfully
+
+# The username for my account on my partner's BeagleBone is Stewart and the password is "password".
+
+# Create .ssh directory for new user
+cd /home/pariya
+sudo mkdir .ssh
+
+# Change ownership and permission on .ssh directory
+sudo chown -R pariya .ssh
+sudo chmod 700 .ssh
+
+##### How to Check IP Addresses
+ifconfig
+
+Output of previous command:
+SoftAp0   Link encap:Ethernet  HWaddr c4:f3:12:7f:b9:f7
+          inet addr:192.168.8.1  Bcast:192.168.8.255  Mask:255.255.255.0
+          inet6 addr: fe80::c6f3:12ff:fe7f:b9f7/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:89 errors:0 dropped:1 overruns:0 frame:0
+          TX packets:132 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000
+          RX bytes:7516 (7.3 KiB)  TX bytes:20330 (19.8 KiB)
+
+lo        Link encap:Local Loopback
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:65536  Metric:1
+          RX packets:1738 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:1738 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1
+          RX bytes:150329 (146.8 KiB)  TX bytes:150329 (146.8 KiB)
+
+usb0      Link encap:Ethernet  HWaddr c4:f3:12:7f:b9:f9
+          inet addr:192.168.7.2  Bcast:192.168.7.255  Mask:255.255.255.0
+          inet6 addr: fe80::c6f3:12ff:fe7f:b9f9/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:6851 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:1840 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000
+          RX bytes:2278098 (2.1 MiB)  TX bytes:338286 (330.3 KiB)
+
+wlan0     Link encap:Ethernet  HWaddr 2c:f7:f1:06:91:1b
+          inet addr:192.168.8.147  Bcast:192.168.8.255  Mask:255.255.255.0
+          inet6 addr: fe80::2ef7:f1ff:fe06:911b/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST DYNAMIC  MTU:1500  Metric:1
+          RX packets:374 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:1072 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000
+          RX bytes:72120 (70.4 KiB)  TX bytes:231864 (226.4 KiB)
+
+# The IP address of my BeagleBone is 192.168.8.147
+
+# The IP address of my partner's BeagleBone is 172.20.10.6
+
+##### Client Steps – Make logins convenient
+
+# Copy your public key to the server for key-based authentication (~/.ssh/authorized_keys)
+ssh-copy-id -i Stewart@172.20.10.6
+
+Output of previous command:
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+
+/usr/bin/ssh-copy-id: ERROR: ssh: connect to host 172.20.10.6 port 22: Connection timed out
+
+# Connect to partner’s BeagleBone's wifi network so can use ssh
+connmanctl
+connmanctl> scan wifi
+connmanctl> services
+
+Output of previous command:
+*Aa UCLA_WEB             wifi_2cf7f106911b_55434c415f574542_managed_none
+    BeagleBone-90F1      wifi_2cf7f106911b_426561676c65426f6e652d39304631_managed_psk
+    SIL Network          wifi_2cf7f106911b_53494c204e6574776f726b_managed_psk
+    eduroam              wifi_2cf7f106911b_656475726f616d_managed_ieee8021x
+    UCLA_WIFI            wifi_2cf7f106911b_55434c415f57494649_managed_none
+                         wifi_2cf7f106911b_hidden_managed_psk
+
+connmanctl> agent on
+connmanctl> connect wifi_2cf7f106911b_426561676c65426f6e652d39304631_managed_psk
+
+Output of previous command:
+Agent RequestInput wifi_2cf7f106911b_426561676c65426f6e652d39304631_managed_psk
+  Passphrase = [ Type=psk, Requirement=mandatory ]
+Passphrase? # BeagleBone
+Connected wifi_2cf7f106911b_426561676c65426f6e652d39304631_managed_psk
+
+connmanctl> quit
+
+ssh-copy-id -i Stewart@172.20.10.6
+
+Output of previous command:
+The authenticity of host '172.20.10.6 (172.20.10.6)' can't be established.
+ECDSA key fingerprint is 63:88:ce:75:80:b2:22:58:f5:e3:36:f7:8b:97:a9:a5.
+Are you sure you want to continue connecting (yes/no)? # yes
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+Stewart@172.20.10.6's password: # password
+
+Number of key(s) added: 1
+
+Now try logging into the machine, with:   "ssh 'Stewart@172.20.10.6'"
+and check to make sure that only the key(s) you wanted were added.
+
+# Note that we were having an issue where I could ssh to my partner's BeagleBone but she couldn't ssh/ping to mine, so after trying the workarounds for public networks listed on Piazza like using personal hotspots and the BeagleBone wifi networks for a long time, getting TA Shivam to try with his own hotspot and he couldn't fix the issue, we came back to Boelter 3760 so sit on chairs outside the room and use the network CR3760-wifi. This resolved the issues we were having.
+
+# Connect my BeagleBone to CR3760-wifi using connmanctl (details omitted for brevity).
+
+# My new IP is 10.97.85.189, my partner's new IP is 10.97.85.190.
+
+# Add private key to authentication agent (ssh-agent)
+eval $(ssh-agent)
+
+Output of previous command:
+Agent pid 4318
+
+ssh-add
+
+Output of previous command:
+Identity added: /root/.ssh/id_rsa (rsa w/o comment)
+
+# SSH to server and verify keys were copied to ~/.ssh/authorized_keys
+ssh Stewart@10.97.85.190
+
+Output of previous command:
+The authenticity of host '10.97.85.190 (10.97.85.190)' can't be established.
+ECDSA key fingerprint is 63:88:ce:75:80:b2:22:58:f5:e3:36:f7:8b:97:a9:a5.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '10.97.85.190' (ECDSA) to the list of known hosts.
+
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+Last login: Sun Oct  7 18:51:22 2018 from 192.168.6.1
+
+cat ~/.ssh/authorized_keys
+
+# Test run a program on partner's host that displays on my host
+vi hello.txt 	     # type "Hello World"
+
+# Test port forwarding enables running a command on a remote host that shows a graphical display on my host
+exit   	    	       	      
+exit
+sudo ssh -X root@192.168.7.2
+ssh -X Stewart@10.97.85.190
+
+Output of previous command:
+
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+Last login: Sun Oct  7 16:49:01 2018 from 10.97.85.189
+
+firefox
+
+# We see the Firefox browser open up in XQuartz on my macbook laptop and a lot of debug messages from Firefox in the terminal, demonstrating that the configuration I did for X11 forwarding based on the Piazza instructions was done correctly.
+
+#################### Steps taken to configure my partner's BeagleBone (if any)
+
+N/A
