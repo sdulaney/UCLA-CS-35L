@@ -90,7 +90,7 @@ The key's randomart image is:
 +-----------------+
 
 # Create an account for the client on the server
-sudo useradd –d /home/pariya -m pariya
+sudo useradd -d /home/pariya -m pariya
 
 Output of previous command:
 Usage: useradd [options] LOGIN
@@ -200,7 +200,7 @@ wlan0     Link encap:Ethernet  HWaddr 2c:f7:f1:06:91:1b
 
 # The IP address of my partner's BeagleBone is 172.20.10.6
 
-##### Client Steps – Make logins convenient
+##### Client Steps - Make logins convenient
 
 # Copy your public key to the server for key-based authentication (~/.ssh/authorized_keys)
 ssh-copy-id -i Stewart@172.20.10.6
@@ -210,7 +210,7 @@ Output of previous command:
 
 /usr/bin/ssh-copy-id: ERROR: ssh: connect to host 172.20.10.6 port 22: Connection timed out
 
-# Connect to partner’s BeagleBone's wifi network to avoid restrictions of public network
+# Connect to partner's BeagleBone's wifi network to avoid restrictions of public network
 connmanctl
 connmanctl> scan wifi
 connmanctl> services

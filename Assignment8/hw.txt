@@ -5,7 +5,7 @@ explained.
 
 # The GNU/Linux server used was lnxsrv06.
 
-# Generate a key pair with the GNU Privacy Guard’s commands (choose default options when prompted)
+# Generate a key pair with the GNU Privacy Guard's commands (choose default options when prompted)
 gpg2 --gen-key
 
 Output of previous command:
