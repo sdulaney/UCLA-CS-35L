@@ -130,7 +130,8 @@ Options:
 
 sudo passwd pariya
 
-# This gave me an error about the user not existing which made me realize the useradd command wasn't executing properly (it displays the usage message - https://piazza.com/class/k0zogkkf73r5dj?cid=539).
+# This gave me an error about the user not existing which made me realize the useradd command wasn't executing properly (it displays the usage message -
+https://piazza.com/class/k0zogkkf73r5dj?cid=539).
 
 # We had to use a work around where we left off the option -d from useradd because useradd will create the home directory in the same (default) location without that argument.
 
@@ -209,7 +210,7 @@ Output of previous command:
 
 /usr/bin/ssh-copy-id: ERROR: ssh: connect to host 172.20.10.6 port 22: Connection timed out
 
-# Connect to partner’s BeagleBone's wifi network so can use ssh
+# Connect to partner’s BeagleBone's wifi network to avoid restrictions of public network
 connmanctl
 connmanctl> scan wifi
 connmanctl> services
@@ -248,13 +249,16 @@ Number of key(s) added: 1
 Now try logging into the machine, with:   "ssh 'Stewart@172.20.10.6'"
 and check to make sure that only the key(s) you wanted were added.
 
-# Note that we were having an issue where I could ssh to my partner's BeagleBone but she couldn't ssh/ping to mine, so after trying the workarounds for public networks listed on Piazza like using personal hotspots and the BeagleBone wifi networks for a long time, getting TA Shivam to try with his own hotspot and he couldn't fix the issue, we came back to Boelter 3760 so sit on chairs outside the room and use the network CR3760-wifi. This resolved the issues we were having.
+# Note that we were having an issue where I could ssh to my partner's BeagleBone but she couldn't ssh/ping to mine, so after trying the workarounds for public networks listed on Piazza like using
+personal hotspots and the BeagleBone wifi networks for a long time, getting TA Shivam to try with his own hotspot and he couldn't fix the issue, we came back to Boelter 3760 so sit on chairs outside
+the room and use the network CR3760-wifi. This resolved the issues we were having.
 
 # Connect my BeagleBone to CR3760-wifi using connmanctl (details omitted for brevity).
 
 # My new IP is 10.97.85.189, my partner's new IP is 10.97.85.190.
 
-# Add private key to authentication agent (ssh-agent)
+# Add private key to authentication agent (ssh-agent), so that I'm no longer prompted for the passphrase for my private key when using ssh
+
 eval $(ssh-agent)
 
 Output of previous command:
@@ -265,7 +269,7 @@ ssh-add
 Output of previous command:
 Identity added: /root/.ssh/id_rsa (rsa w/o comment)
 
-# SSH to server and verify keys were copied to ~/.ssh/authorized_keys
+# SSH to server and verify key was copied to ~/.ssh/authorized_keys
 ssh Stewart@10.97.85.190
 
 Output of previous command:
@@ -305,7 +309,8 @@ Last login: Sun Oct  7 16:49:01 2018 from 10.97.85.189
 
 firefox
 
-# We see the Firefox browser open up in XQuartz on my macbook laptop and a lot of debug messages from Firefox in the terminal, demonstrating that the configuration I did for X11 forwarding based on the Piazza instructions was done correctly.
+# We see the Firefox browser open up in XQuartz on my macbook laptop and a lot of debug messages from Firefox in the terminal, demonstrating that the configuration I did for X11 forwarding based on
+the Piazza instructions was done correctly. Note that using option -X for ssh was needed in both ssh sessions (laptop to BeagleBone and BeagleBone to partner's BeagleBone).
 
 #################### Steps taken to configure my partner's BeagleBone (if any)
 

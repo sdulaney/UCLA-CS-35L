@@ -96,8 +96,95 @@ You need a passphrase to unlock the secret key for
 user: "Stewart Dulaney (Turkey) <sdulaney@ucla.edu>"
 2048-bit RSA key, ID FE75A706, created 2019-11-26	# 6BdwGjrdUh
 
+# The following shell commands should work and the gpg2 --verify command should say "Good signature"
+mkdir -m go-rwx .gnupg
+gpg2 --homedir .gnupg --import hw-pubkey.asc
+
+Output of previous command:
+gpg: keyring `.gnupg/secring.gpg' created
+gpg: keyring `.gnupg/pubring.gpg' created
+gpg: .gnupg/trustdb.gpg: trustdb created
+gpg: key FE75A706: public key "Stewart Dulaney (Turkey) <sdulaney@ucla.edu>" imported
+gpg: Total number processed: 1
+gpg:               imported: 1  (RSA: 1)
+
+gpg2 --homedir .gnupg --verify eeprom.sig eeprom
+
+Output of previous command:
+gpg: Signature made Tue Nov 26 14:27:53 2019 PST using RSA key ID FE75A706
+gpg: Good signature from "Stewart Dulaney (Turkey) <sdulaney@ucla.edu>"
+gpg: WARNING: This key is not certified with a trusted signature!
+gpg:          There is no indication that the signature belongs to the owner.
+Primary key fingerprint: 0CEC 608C 62B2 9C48 542E  EA30 2A96 275D FE75 A706
+
+# Note the gpg2 --verify command says "Good signature" as desired.
+
 ########## Question 1
 
+Suppose the other teams really had been observing all the bytes going across the network in your lab exercise. Is your resulting network still secure? If so, explain why.
 
+Yes, the network is still secure because we are using SSH (secure shell) to send data over the network (for remote login and shell access between the BeagleBone's).
+- This means that even if an attacker observes the bytes going across the network, the messages sent between our BeagleBone's will be encrypted with a symmetric encryption key (session key).
+- I was curious if this session key could be sniffed over the network but I learned that the client and server use the Diffie-Hellman algorithm for key exchange, which allows them to jointly establish
+a shared secret key over an insecure channel. 
+- Therefore, without the session key, an attacker would not be able to decrypt the communications between our BeagleBone's. 
+- It should be noted that (symmetric) secret key used to encrypt communications is completely separate from the (asymmetric) public key/private key pair used for client authentication, and the
+symmetrical encryption is established before client authentication.
+- Because ssh-copy-id uses SSH under the hood (with password authentication in our case), the attacker cannot decrypt the messages containing the password used for authentication and public key being 
+copied to the server due to the same symmetric encryption reasoning.
+
+Explain whether your answer would change if:
+
+(1) you assumed the other teams had also tapped your keyboards after you completed all client-server setup and had thereby obtained your team's keystrokes during later operation
+
+Yes, the network is still secure because the only sensitive info that would be compromised is the passphrase for the private key used for client authentication, which doesn't give the attacker access 
+to anything without the private key file itself.
+- The password for my account on my partner's BeagleBone would not be compromised because after completing client-server setup (namely, the step copying my public key to the server), key-based
+authentication is used instead of password authentication.
+- All communications over the network would still be encrypted per the explanation above.
+- Although confidentiality is compromised because the observer knows commands we typed after setup and the passphrase for our private key, the network itself is still secure because an attacker can't 
+decrypt communications or login to our hosts.
+
+or (2) you are booting off USB and you assume the other teams temporarily had physical control of the USB
+
+If not, explain any weaknesses of your team's setups, focusing on possible attacks by such outside observers.
+
+No, the network is not secure in this case because if attackers had control of a USB I am booting off they could copy my public and private keys from ~/.ssh and therefore be in control of my private
+key.
+- A possible attack could be that with a copy of my private key, they could impersonate me and SSH into my account on my partner's BeagleBone using key-based authentication.
+- Because the passwords for user accounts on my host are hashed before being stored (irreversible except by brute force), the attacker could only SSH into my host with password authentication if they 
+brute force tried hashing different passwords with the same algorithm and got lucky and produced the same hash (thereby learning the plaintext password). However, this is unlikely.
+- The attacker could also copy my partner's public key from ~/.ssh/authorized_keys in their home directory on my host, but this would not give them access to that account on my host (they'd need the
+private key), nor would it give the attacker access to my partner's host.
 
 ########## Question 2
+
+Explain why the gpg2 --verify command in the following instructions doesn't really verify that you personally created the file in question. 
+
+The command we ran was:
+gpg2 --homedir .gnupg --verify eeprom.sig eeprom
+
+The output we saw was:
+gpg: Signature made Tue Nov 26 14:27:53 2019 PST using RSA key ID FE75A706
+gpg: Good signature from "Stewart Dulaney (Turkey) <sdulaney@ucla.edu>"
+gpg: WARNING: This key is not certified with a trusted signature!
+gpg:          There is no indication that the signature belongs to the owner.
+Primary key fingerprint: 0CEC 608C 62B2 9C48 542E  EA30 2A96 275D FE75 A706
+
+The gpg2 --verify command only checks that the specified signature (.sig file) was created using the private key corresponding to a given public key (in this case the one we imported to our public
+keyring, hw-pubkey.asc) and that the specified document has not been modified. The "Good signature" message indicates these checks have passed.
+
+However, the command doesn't really verify that I personally created the signature file in question. This is because anyone, including a malicious party performing a man in the middle attack, can
+generate a public/private key pair using gpg2 --gen-key with my name and information as the user ID. For example, if said malicious party intercepted a message from me to my partner containing a
+document/signature/my public key and replaced it with a modified document/signature generated with their private key/their public key (with my name in the user ID), when my partner ran the
+gpg2 --verify command it would still say "Good signature" and that it was signed by me (when in fact it was not).
+
+How would you go about fixing this problem?
+
+In order to address this problem, one way would be to publish my public key on a public website like the GNU Project does with their keyring as a way to verify the signature of Coreutils. However,
+this doesn't really verify identity of the author either as you have to assume they are in control of the website and that it has not been tampered with. A better solution is a trusted third party,
+such as a Certificate authority (CA). This party validates a person's identity and either generates a public/private key pair on their behalf or associates an existing public key provided by that
+person to that person. Once they verify someone's identity, they issue a digital certificate that is signed by the CA, which can be used to verify a person associated with a public key when requested.
+As long as the third party is trusted, this solves the problem because a receiver of a message from me can verify a public key is actually mine, and then check that a document was signed by me using
+that public key. Another way people address this issue is by marking keys as trusted themselves (say I know my partner's key so I decide to trust it), or by trusting keys within your web of trust
+(Source: GPG Manual).
