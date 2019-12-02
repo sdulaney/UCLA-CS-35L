@@ -1,0 +1,288 @@
+Laboratory: Git spelunking
+
+NOTE: Per the spec, this is a log of what I did in the lab so that I can reproduce the results later and I've briefly noted down what I did and what happened. Trivial commands may or may not be
+explained.
+
+# The commands for the following questions were run on lnxsrv03.
+
+############################## Question 1
+# Note the du command gives us the amount of space the file is using on disk, not the size of the file, as desired for this question.
+
+How much disk space is used to represent the working files in this directory? 
+
+162496 bytes
+
+cd ~eggert/src/gnu/emacs-CS-35L
+du --exclude='.git*' -s
+
+Output of previous command:
+162496 .
+
+How much is used to represent the Git repository?
+
+358316 bytes
+
+du .git -s
+
+Output of previous command:
+358316 .git
+
+What file or files consume most of the repository space and why?
+
+The regular files consuming most of the repository space are:
+- .git/objects/info/commit-graph because this file is a supplemental data structure that accelerates commit graph walks (which can become slow as the commit count grows). This indicates the repository has a large number of commits, which we confirm using the command git rev-list to be 143910.
+- .git/objects/pack/pack-24e56b1749b9320c560213d9045fa6cee42b4174.pack because this is the packfile, a single binary file that Git packs objects into in order to save space and be more efficient. The packfile contains the contents of all the objects (such as blobs, trees, commits, and tags) packed into it (which explains why it's so large), but it is still smaller than the original size of the objects. Git achieves this by looking for files that are named and sized similarly, and stores just the deltas from one version of the file to the next.
+- .git/objects/pack/pack-24e56b1749b9320c560213d9045fa6cee42b4174.idx because this is an index that contains offsets into the packfile so you can quickly seek to a specific object. Due to the large number of commit objects and the fact this includes other types of objects as well, it makes sense that this index consumes a sizable amount of disk space (though less than a tenth of the space consumed by the packfile itself).
+
+du .git
+
+Output of previous command:
+56     .git/info
+72     .git/hooks
+4      .git/branches
+4      .git/refs/heads/feature
+4      .git/refs/heads/features
+4      .git/refs/heads/fix
+4      .git/refs/heads/heads
+4      .git/refs/heads/old-branches
+4      .git/refs/heads/other-branches
+4      .git/refs/heads/scratch/joaot
+4      .git/refs/heads/scratch/np
+4      .git/refs/heads/scratch/ns
+4      .git/refs/heads/scratch/tzz
+20     .git/refs/heads/scratch
+48     .git/refs/heads
+4      .git/refs/tags
+4      .git/refs/remotes/origin/feature
+4      .git/refs/remotes/origin/scratch/joaot
+4      .git/refs/remotes/origin/scratch/ns
+12     .git/refs/remotes/origin/scratch
+20     .git/refs/remotes/origin
+24     .git/refs/remotes
+80     .git/refs
+342032 .git/objects/pack
+7892   .git/objects/info
+349928 .git/objects
+24     .git/logs/refs/remotes/origin/feature
+8      .git/logs/refs/remotes/origin/scratch/joaot
+8      .git/logs/refs/remotes/origin/scratch/ns
+40     .git/logs/refs/remotes/origin/scratch
+76     .git/logs/refs/remotes/origin
+80     .git/logs/refs/remotes
+96     .git/logs/refs/heads/feature
+8      .git/logs/refs/heads/features
+56     .git/logs/refs/heads/fix
+8      .git/logs/refs/heads/heads
+100    .git/logs/refs/heads/old-branches
+80     .git/logs/refs/heads/other-branches
+8      .git/logs/refs/heads/scratch/joaot
+8      .git/logs/refs/heads/scratch/np
+12     .git/logs/refs/heads/scratch/ns
+16     .git/logs/refs/heads/scratch/tzz
+312    .git/logs/refs/heads/scratch
+756    .git/logs/refs/heads
+840    .git/logs/refs
+848    .git/logs
+358316 .git
+
+ls -la .git/objects/info
+
+Output of previous command:
+total 7896
+drwxr-xr-x 2 eggert csfac    4096 Nov 25 16:39 .
+drwxr-xr-x 4 eggert csfac    4096 Aug 15 11:02 ..
+-rw-r--r-- 1 eggert csfac 8060384 Nov 25 16:39 commit-graph
+-rw-r--r-- 1 eggert csfac      54 Nov 25 16:39 packs
+
+du .git/objects/info/commit-graph
+
+Output of previous command:
+7888   .git/objects/info/commit-graph
+
+git rev-list --all --count
+
+Output of previous command:
+143910
+
+ls -la .git/objects/pack
+
+Output of previous command:
+total 342036
+drwxr-xr-x 2 eggert csfac      4096 Nov 25 16:39 .
+drwxr-xr-x 4 eggert csfac      4096 Aug 15 11:02 ..
+-r--r--r-- 1 eggert csfac  24393552 Nov 25 16:39 pack-24e56b1749b9320c560213d9045fa6cee42b4174.idx
+-r--r--r-- 1 eggert csfac 325142809 Nov 25 19:00 pack-24e56b1749b9320c560213d9045fa6cee42b4174.pack
+
+du .git/objects/pack -a
+
+Output of previous command:
+23876  .git/objects/pack/pack-24e56b1749b9320c560213d9045fa6cee42b4174.idx
+318152 .git/objects/pack/pack-24e56b1749b9320c560213d9045fa6cee42b4174.pack
+342032 .git/objects/pack
+
+############################## Question 2
+How many branches are local to the repository? 
+
+176 branches
+
+git branch | wc -l
+
+Output of previous command:
+176
+
+How many are remote?
+
+176 branches
+
+git remote
+
+Output of previous command:
+origin
+
+git branch -r
+
+# Exclude first line with shows what HEAD of origin points to.
+git branch -r | tail -n +2 | wc -l
+
+Output of previous command:
+176
+
+############################## Question 3
+How many repositories are remote to this repository, and where are they?
+
+1 repository. It's fetch and push URL's are https://git.savannah.gnu.org/git/emacs.git.
+
+git remote -v
+
+Output of previous command:
+origin https://git.savannah.gnu.org/git/emacs.git (fetch)
+origin https://git.savannah.gnu.org/git/emacs.git (push)
+
+############################## Question 4
+What are the ten local branches most recently committed to? List their names in order of commit date, most recent first.
+
+master
+scratch/joaot/make-completion-at-point-function
+feature/windows-with-utils
+scratch/completion-api
+scratch/a-modest-completion-redesign-proposal
+scratch/fido-mode
+feature/gnus-select2
+feature/extend_face_id
+scratch/jit-lock-antiblink-cleaned-up
+emacs-26
+
+git for-each-ref --sort=-committerdate refs/heads/ --format='%(committerdate:short) %(refname:short)' --count=10
+
+Output of previous command:
+2019-11-25 master
+2019-11-20 scratch/joaot/make-completion-at-point-function
+2019-11-18 feature/windows-with-utils
+2019-11-16 scratch/completion-api
+2019-11-10 scratch/a-modest-completion-redesign-proposal
+2019-11-05 scratch/fido-mode
+2019-11-03 feature/gnus-select2
+2019-10-14 feature/extend_face_id
+2019-10-10 scratch/jit-lock-antiblink-cleaned-up
+2019-10-07 emacs-26
+
+git for-each-ref --sort=-committerdate refs/heads/ --format='%(refname:short)' --count=10
+
+Output of previous command:
+master
+scratch/joaot/make-completion-at-point-function
+feature/windows-with-utils
+scratch/completion-api
+scratch/a-modest-completion-redesign-proposal
+scratch/fido-mode
+feature/gnus-select2
+feature/extend_face_id
+scratch/jit-lock-antiblink-cleaned-up
+emacs-26
+
+############################## Question 5
+How many commits are in the master branch?
+
+139583 commits
+
+git rev-list --count master
+
+Output of previous command:
+139583
+
+############################## Question 6
+What percentage of the commits that are in any branch, are also in the master branch?
+
+(number of commits in master branch)/(total number of commits across all branches) = 139583 / 143910
+
+git rev-list --count master
+
+Output of previous command:
+139583
+
+git rev-list --all --count
+
+Output of previous command:
+143910
+
+############################## Question 7
+Which ten people authored the most master-branch commits that were committed in the year 2013 or later, and how many commits did each of them author during that period?
+
+3691  Eli Zaretskii
+3647  Glenn Morris
+3605  Paul Eggert
+1806  Lars Ingebrigtsen
+1784  Stefan Monnier
+1571  Michael Albinus
+619   Dmitry Gutov
+576   Noam Postavsky
+471   Alan Mackenzie
+469   Juri Linkov
+
+# current branch is master
+git shortlog -n -s --since="2013-01-01T00:00:00-08:00" | head -n 10
+
+Output of previous command:
+  3691 Eli Zaretskii
+  3647 Glenn Morris
+  3605 Paul Eggert
+  1806 Lars Ingebrigtsen
+  1784 Stefan Monnier
+  1571 Michael Albinus
+   619 Dmitry Gutov
+   576 Noam Postavsky
+   471 Alan Mackenzie
+   469 Juri Linkov
+
+############################## Question 8
+Use the gitk command to visualize the commit graph in this repository. If you are SSHing into SEASnet, you’ll need to log in via ssh -X or (less securely) ssh -Y. Draw a diagram relating the following commits to each other, and explain what likely happened to cause their commit-graph neighborhood. You need not list every single intervening commit individually; you can simply use ellipses.
+
+# Let the specified commits be numbered c1 through c10 as shown below.
+
+4ea37c2b8b0c5a68fde59770c3536195e0972217 	 c1    Cope better with C++ and Objective-C protection keywords in class declarations
+977cd6cb28a37744966ec62f70cf62659f6f302a	 c2    Increment Emacs version to 27.0.50
+625cee531623feddbe3174fad52c7db96ec60bb3	 c3    Start emacs-26 release branch
+5490ccc5ebf39759dfd084bbd31f464701a3e775	 c4    Add lisp variable lcms-d65-xyz
+0c06b93c1e467debd401eb0b3be4652fde14fa95	 c5
+820739bbb572b30b6ce45756c9960e48dca859af	 c6
+00e4e3e9d273a193620c3a4bb4914e555cb8e343	 c7
+49cd561dc62ea6b3fbedab7aef0f020733f4cf09	 c8
+abcb2e62dae6aa26308f7ac9efc89247f89cbe65	 c9
+98ac36efe4ce4bd3a0bca76fc73ce6c7abaa4371	 c10
+
+# Diagram:
+
+# NOTE: c2 is a child of c1 and c3 is a child of c1, as in the format of the diagram in the spec of Homework: Topologically ordered commits.
+
+c1 -> c2
+ \
+ c3 TODO: ... c4
+					 
+
+
+
+
+ssh -X stewart@lnxsrv03.seas.ucla.edu
+cd ~eggert/src/gnu/emacs-CS-35L
+gitk --all
+# Type a unique prefix of the SHA-1 commit hash in the commit hash field in gitk, then click "Goto:" for each commit
