@@ -1,0 +1,2 @@
+scp -r stewart@lnxsrv07.seas.ucla.edu:/u/cs/ugrad/stewart/Assignment9/hw .
+cp hw/topo-ordered-commits-test-suite/topo_order_commits.py /Users/stewart/Dropbox/@Education/Archive/UCLA/2019-20/Fall\ 2019/CS\ 35L\ -\ Software\ Construction\ Laboratory/Assignment9/
