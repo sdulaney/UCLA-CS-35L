@@ -30,9 +30,14 @@ Output of previous command:
 What file or files consume most of the repository space and why?
 
 The regular files consuming most of the repository space are:
-- .git/objects/info/commit-graph because this file is a supplemental data structure that accelerates commit graph walks (which can become slow as the commit count grows). This indicates the repository has a large number of commits, which we confirm using the command git rev-list to be 143910.
-- .git/objects/pack/pack-24e56b1749b9320c560213d9045fa6cee42b4174.pack because this is the packfile, a single binary file that Git packs objects into in order to save space and be more efficient. The packfile contains the contents of all the objects (such as blobs, trees, commits, and tags) packed into it (which explains why it's so large), but it is still smaller than the original size of the objects. Git achieves this by looking for files that are named and sized similarly, and stores just the deltas from one version of the file to the next.
-- .git/objects/pack/pack-24e56b1749b9320c560213d9045fa6cee42b4174.idx because this is an index that contains offsets into the packfile so you can quickly seek to a specific object. Due to the large number of commit objects and the fact this includes other types of objects as well, it makes sense that this index consumes a sizable amount of disk space (though less than a tenth of the space consumed by the packfile itself).
+- .git/objects/info/commit-graph because this file is a supplemental data structure that accelerates commit graph walks (which can become slow as the commit count grows). This indicates the repository
+has a large number of commits, which we confirm using the command git rev-list to be 143910.
+- .git/objects/pack/pack-24e56b1749b9320c560213d9045fa6cee42b4174.pack because this is the packfile, a single binary file that Git packs objects into in order to save space and be more efficient. The 
+packfile contains the contents of all the objects (such as blobs, trees, commits, and tags) packed into it (which explains why it's so large), but it is still smaller than the original size of the
+objects. Git achieves this by looking for files that are named and sized similarly, and stores just the deltas from one version of the file to the next.
+- .git/objects/pack/pack-24e56b1749b9320c560213d9045fa6cee42b4174.idx because this is an index that contains offsets into the packfile so you can quickly seek to a specific object. Due to the large
+number of commit objects and the fact this includes other types of objects as well, it makes sense that this index consumes a sizable amount of disk space (though less than a tenth of the space
+consumed by the packfile itself).
 
 du .git
 
@@ -255,7 +260,8 @@ Output of previous command:
    469 Juri Linkov
 
 ############################## Question 8
-Use the gitk command to visualize the commit graph in this repository. If you are SSHing into SEASnet, you’ll need to log in via ssh -X or (less securely) ssh -Y. Draw a diagram relating the following commits to each other, and explain what likely happened to cause their commit-graph neighborhood. You need not list every single intervening commit individually; you can simply use ellipses.
+Use the gitk command to visualize the commit graph in this repository. If you are SSHing into SEASnet, you’ll need to log in via ssh -X or (less securely) ssh -Y. Draw a diagram relating the following
+commits to each other, and explain what likely happened to cause their commit-graph neighborhood. You need not list every single intervening commit individually; you can simply use ellipses.
 
 # Let the specified commits be numbered c1 through c10 as shown below.
 
