@@ -265,30 +265,38 @@ commits to each other, and explain what likely happened to cause their commit-gr
 
 # Let the specified commits be numbered c1 through c10 as shown below.
 
-4ea37c2b8b0c5a68fde59770c3536195e0972217 	 c1    Cope better with C++ and Objective-C protection keywords in class declarations
-977cd6cb28a37744966ec62f70cf62659f6f302a	 c2    Increment Emacs version to 27.0.50
-625cee531623feddbe3174fad52c7db96ec60bb3	 c3    Start emacs-26 release branch
-5490ccc5ebf39759dfd084bbd31f464701a3e775	 c4    Add lisp variable lcms-d65-xyz
-0c06b93c1e467debd401eb0b3be4652fde14fa95	 c5
-820739bbb572b30b6ce45756c9960e48dca859af	 c6
-00e4e3e9d273a193620c3a4bb4914e555cb8e343	 c7
-49cd561dc62ea6b3fbedab7aef0f020733f4cf09	 c8
-abcb2e62dae6aa26308f7ac9efc89247f89cbe65	 c9
-98ac36efe4ce4bd3a0bca76fc73ce6c7abaa4371	 c10
+4ea37c2b8b0c5a68fde59770c3536195e0972217 	 
+977cd6cb28a37744966ec62f70cf62659f6f302a
+625cee531623feddbe3174fad52c7db96ec60bb3
+5490ccc5ebf39759dfd084bbd31f464701a3e775
+0c06b93c1e467debd401eb0b3be4652fde14fa95
+820739bbb572b30b6ce45756c9960e48dca859af
+00e4e3e9d273a193620c3a4bb4914e555cb8e343
+49cd561dc62ea6b3fbedab7aef0f020733f4cf09
+abcb2e62dae6aa26308f7ac9efc89247f89cbe65
+98ac36efe4ce4bd3a0bca76fc73ce6c7abaa4371
 
 # Diagram:
 
-# NOTE: c2 is a child of c1 and c3 is a child of c1, as in the format of the diagram in the spec of Homework: Topologically ordered commits.
-
-c1 -> c2
- \
- c3 TODO: ... c4
-					 
+# NOTE: 977cd6cb28 is a child of 4ea37c2b8b and 625cee5316 is a child of 4ea37c2b8b, as in the format of the diagram in the spec of Homework: Topologically ordered commits.
 
 
+4ea37c2b8b -> 977cd6cb28 -> ... -> ... -> 0c06b93c1e -> ... -> ... -> ... -> ... -> abcb2e62da -> ... -> 98ac36efe4 -> ...
+    \	      		    	         /	     	       	      	     	    	/      	      	     /    
+     \			             ... -> ... -> 820739bbb5 -> 00e4e3e9d2 -> ... -> 49cd561dc6 -> ... -> ...
+      \			           /
+   625cee5316 -> ... -> 5490ccc5eb
+				   \
+				    ... 
 
+# Explain what likely happened to cause their commit-graph neighborhood:
+# - Note in the diagram that a commit with two children (where both have no other parents) likely indicates a branch has been created, and a commit with two parents likely indicates it was a merge
+# commit
+# - By that reasoning, the following sets of commits explain what likely happened:
+# - branch created: 4ea37c2b8b, 5490ccc5eb
+# - merge commit: 0c06b93c1e, abcb2e62da, 98ac36efe4
 
 ssh -X stewart@lnxsrv03.seas.ucla.edu
 cd ~eggert/src/gnu/emacs-CS-35L
 gitk --all
-# Type a unique prefix of the SHA-1 commit hash in the commit hash field in gitk, then click "Goto:" for each commit
+# Type a unique prefix of the SHA-1 commit hash in the commit hash field in gitk, then click "Goto:" for each commit and scroll
