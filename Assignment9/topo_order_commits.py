@@ -68,9 +68,9 @@ def build_commit_graph(top_level_git_dir, local_branch_names):
             if not v.commit_hash in commit_graph:
                 commit_graph[v.commit_hash] = v
             else:
-                for child in v.children:
+                for child in sorted(list(v.children)):
                     commit_graph[v.commit_hash].children.add(child)
-            for parent in v.parents:
+            for parent in sorted(list(v.parents)):
                 if parent not in visited:
                     parent_obj = CommitNode(parent)
                     parent_obj.children.add(v.commit_hash)
@@ -95,7 +95,7 @@ def topo_sort_commits(commit_graph, root_commits):
                 visited.add(v.commit_hash)
                 # Default to True for when node has no children
                 children_processed = True
-                for child_commit_hash in v.children:
+                for child_commit_hash in sorted(list(v.children)):
                     if child_commit_hash not in visited:
                         children_processed = False
                 if children_processed == False:
@@ -112,7 +112,7 @@ def topo_sort_commits(commit_graph, root_commits):
                 finished_proc_node = True
                 while aux_stack and finished_proc_node == True:
                     node = aux_stack.pop()
-                    for child_commit_hash in node.children:
+                    for child_commit_hash in sorted(list(node.children)):
                         if child_commit_hash not in visited:
                             finished_proc_node = False
                     if finished_proc_node == False:
