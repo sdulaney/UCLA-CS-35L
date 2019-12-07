@@ -16,7 +16,7 @@ class CommitNode:
             if line_words[0] == "parent":
                 self.parents.add(line_words[1])
     def get_commit_obj_str_from_hash(self, commit_hash):
-        top_level_git_dir = os.getcwd()
+        top_level_git_dir = get_top_level_git_dir()
         commit_obj_file = open(os.path.join(top_level_git_dir, ".git/objects", commit_hash[0:2], commit_hash[2:40]), "rb")
         return zlib.decompress(commit_obj_file.read()).decode()
     def __str__(self):
@@ -27,7 +27,7 @@ def get_top_level_git_dir():
     top_level_git_dir = os.getcwd()
     while os.path.isdir(os.path.join(top_level_git_dir, ".git")) == False:
         if top_level_git_dir == "/":
-            sys.stderr.write("Not inside a Git repository")
+            sys.stderr.write("Not inside a Git repository\n")
             sys.exit(1)
         top_level_git_dir = os.path.dirname(top_level_git_dir)
     return top_level_git_dir
