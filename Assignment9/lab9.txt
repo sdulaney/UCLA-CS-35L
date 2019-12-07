@@ -218,7 +218,9 @@ Output of previous command:
 ############################## Question 6
 What percentage of the commits that are in any branch, are also in the master branch?
 
-(number of commits in master branch)/(total number of commits across all branches) = 139583 / 143910
+(number of commits in master branch)/(total number of commits across all branches) = 139583 / 143910 = 0.9699 = ~0.97
+
+This is approximately 97%.
 
 git rev-list --count master
 
@@ -263,8 +265,6 @@ Output of previous command:
 Use the gitk command to visualize the commit graph in this repository. If you are SSHing into SEASnet, you’ll need to log in via ssh -X or (less securely) ssh -Y. Draw a diagram relating the following
 commits to each other, and explain what likely happened to cause their commit-graph neighborhood. You need not list every single intervening commit individually; you can simply use ellipses.
 
-# Let the specified commits be numbered c1 through c10 as shown below.
-
 4ea37c2b8b0c5a68fde59770c3536195e0972217 	 
 977cd6cb28a37744966ec62f70cf62659f6f302a
 625cee531623feddbe3174fad52c7db96ec60bb3
@@ -292,7 +292,7 @@ abcb2e62dae6aa26308f7ac9efc89247f89cbe65
 # Explain what likely happened to cause their commit-graph neighborhood:
 # - Note in the diagram that a commit with two children (where both have no other parents) likely indicates a branch has been created, and a commit with two parents likely indicates it was a merge
 # commit
-# - By that reasoning, the following sets of commits explain what likely happened:
+# - By that reasoning, the following sets of commits explain what likely happened to cause the commit-graph neighborhood:
 # - branch created: 4ea37c2b8b, 5490ccc5eb
 # - merge commit: 0c06b93c1e, abcb2e62da, 98ac36efe4
 
